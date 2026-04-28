@@ -6,35 +6,38 @@
     <style>
         :root { --primary: #2c3e50; --accent: #e74c3c; --bg: #ecf0f1; }
         body { font-family: sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; }
-        .app-container { width: 900px; background: white; min-height: 100vh; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .hidden { display: none; }
+        .app-container { width: 950px; background: white; min-height: 100vh; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); position: relative; }
+        .hidden { display: none !important; }
         
         /* 設定画面 */
-        .config-panel { border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
-        .pack-selection label { margin-right: 15px; cursor: pointer; }
+        .pack-selection label { margin-right: 15px; cursor: pointer; display: inline-block; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
         
-        /* ポップアップ/モーダル */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 20px; width: 80%; max-height: 80%; overflow-y: auto; border-radius: 10px; }
+        /* モーダル */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; width: 80%; max-height: 80%; overflow-y: auto; border-radius: 12px; position: relative; }
         
-        /* アコーディオンUI (詳細設定用) */
-        .accordion { border: 1px solid #ddd; margin-bottom: 5px; }
-        .acc-header { background: #eee; padding: 10px; cursor: pointer; font-weight: bold; }
-        .acc-body { padding: 10px; display: none; }
+        /* アコーディオン */
+        .accordion { border: 1px solid #ddd; margin-bottom: 8px; border-radius: 4px; overflow: hidden; }
+        .acc-header { background: #f8f9fa; padding: 12px; cursor: pointer; font-weight: bold; border-bottom: 1px solid #eee; }
+        .acc-header:hover { background: #e9ecef; }
+        .acc-body { padding: 15px; display: none; background: white; }
         .acc-body.active { display: block; }
 
-        /* 2Pick UI */
-        .selection-grid { display: flex; justify-content: space-around; margin-top: 30px; }
-        .option-set { width: 45%; border: 3px solid #ddd; padding: 15px; border-radius: 15px; text-align: center; cursor: pointer; transition: 0.2s; }
-        .option-set:hover { border-color: var(--accent); background: #fff5f5; }
+        /* カード選択 (2Pick) */
+        .selection-grid { display: flex; justify-content: space-around; gap: 20px; margin-top: 20px; }
+        .option-set { width: 45%; border: 3px solid #eee; padding: 20px; border-radius: 20px; text-align: center; cursor: pointer; transition: 0.3s; background: #fff; }
+        .option-set:hover { border-color: var(--accent); transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         
-        .card-display { display: flex; justify-content: center; gap: 10px; }
-        .card-box { width: 120px; text-align: center; }
-        .card-img { width: 100%; height: 160px; background: #333; border-radius: 5px; color: white; display: flex; align-items: center; justify-content: center; }
+        .card-display { display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; }
+        .card-box { width: 140px; }
+        .card-img { width: 100%; height: 190px; background: #34495e; border-radius: 8px; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; overflow: hidden; }
         
-        /* タイプ選択 */
-        .type-select-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .type-btn { padding: 20px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; }
+        /* リーダー選択 */
+        .type-select-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px; }
+        .type-btn { padding: 25px 10px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1rem; }
+        .type-btn:hover { opacity: 0.9; }
+
+        .btn-main { padding: 12px 30px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -43,200 +46,5 @@
     <div id="view-setup">
         <h1>デッキ構築設定</h1>
         <div class="pack-selection">
-            <h3>使用するパックを選択 (1弾〜7弾)</h3>
-            <div id="pack-checkboxes"></div>
-        </div>
-        <br>
-        <button onclick="toggleModal(true)">詳細設定 (カードBAN)</button>
-        <hr>
-        <button id="btn-enter" style="padding: 15px 40px; font-size: 1.2rem;" onclick="enterDraft()">入場</button>
-    </div>
-
-    <div id="modal-ban" class="modal hidden">
-        <div class="modal-content">
-            <h2>カードBAN設定</h2>
-            <div id="accordion-container"></div>
-            <br>
-            <button onclick="toggleModal(false)">設定を閉じる</button>
-        </div>
-    </div>
-
-    <div id="view-type-select" class="hidden">
-        <h2>使用するタイプを選択してください</h2>
-        <div class="type-select-grid" id="type-options"></div>
-    </div>
-
-    <div id="view-draft" class="hidden">
-        <div style="display: flex; justify-content: space-between;">
-            <h3 id="current-type-label">タイプ: </h3>
-            <h3 id="draft-progress">進捗: 0 / 20 選択</h3>
-        </div>
-        <div class="selection-grid">
-            <div class="option-set" onclick="handlePick('A')">
-                <div class="card-display" id="display-A"></div>
-            </div>
-            <div class="option-set" onclick="handlePick('B')">
-                <div class="card-display" id="display-B"></div>
-            </div>
-        </div>
-        <div id="deck-summary" style="margin-top: 40px;">
-            <h4>現在のデッキ枚数: <span id="deck-count">0</span> / 40</h4>
-        </div>
-    </div>
-</div>
-
-<script>
-    /** --- 内部データ管理 --- **/
-    let masterCards = []; // CSVから読み込んだ全データ
-    let activeCards = []; // BAN設定を除いた使用可能カード
-    let myDeck = [];
-    let selectedType = 0;
-    let currentPickCount = 0;
-    let currentOptions = { A: [], B: [] };
-
-    // 仮の初期化データ (本来はCSVから読み込み)
-    // テスト用にJSで生成。実際はここをCSV読み込み関数で上書きします。
-    function initMockData() {
-        for(let i=0; i<200; i++) {
-            masterCards.push({
-                id: i,
-                name: `Card-${i}`,
-                pack: Math.floor(Math.random() * 8), // 0-7
-                type: Math.floor(Math.random() * 8), // 0-7 (0はニュートラル)
-                rarity: Math.floor(Math.random() * 4), // 0-3
-                image_id: `img_${i}`,
-                isBanned: false
-            });
-        }
-    }
-    initMockData();
-
-    /** --- 初期UI生成 --- **/
-    const packArea = document.getElementById('pack-checkboxes');
-    for(let i=1; i<=7; i++) {
-        packArea.innerHTML += `<label><input type="checkbox" class="pack-chk" value="${i}" checked> ${i}弾</label>`;
-    }
-
-    /** --- BAN設定のUI (アコーディオン) --- **/
-    function renderBanSettings() {
-        const container = document.getElementById('accordion-container');
-        container.innerHTML = '';
-        for(let i=0; i<=7; i++) {
-            const typeName = i === 0 ? "ニュートラル" : `タイプ ${i}`;
-            const section = document.createElement('div');
-            section.className = 'accordion';
-            section.innerHTML = `
-                <div class="acc-header" onclick="this.nextElementSibling.classList.toggle('active')">${typeName} ▼</div>
-                <div class="acc-body">
-                    ${masterCards.filter(c => c.type === i).map(c => `
-                        <label><input type="checkbox" onchange="updateBan(${c.id}, this.checked)" ${!c.isBanned ? 'checked' : ''}> ${c.name}</label><br>
-                    `).join('')}
-                </div>
-            `;
-            container.appendChild(section);
-        }
-    }
-    renderBanSettings();
-
-    function updateBan(cardId, isChecked) {
-        const card = masterCards.find(c => c.id === cardId);
-        if(card) card.isBanned = !isChecked;
-    }
-
-    function toggleModal(show) {
-        document.getElementById('modal-ban').classList.toggle('hidden', !show);
-    }
-
-    /** --- 2Pick 入場処理 --- **/
-    function enterDraft() {
-        const selectedPacks = Array.from(document.querySelectorAll('.pack-chk:checked')).map(el => parseInt(el.value));
-        // ニュートラル(0)と選択パックのカードをフィルタ
-        activeCards = masterCards.filter(c => !c.isBanned && (c.pack === 0 || selectedPacks.includes(c.pack)));
-        
-        document.getElementById('view-setup').classList.add('hidden');
-        document.getElementById('view-type-select').classList.remove('hidden');
-        
-        renderTypeSelection();
-    }
-
-    function renderTypeSelection() {
-        const container = document.getElementById('type-options');
-        for(let i=1; i<=7; i++) {
-            const btn = document.createElement('button');
-            btn.className = 'type-btn';
-            btn.innerText = `タイプ ${i}\n(レア度2,3抽選)`;
-            btn.onclick = () => startBuilding(i);
-            container.appendChild(btn);
-        }
-    }
-
-    /** --- デッキ構築ロジック --- **/
-    function startBuilding(typeId) {
-        selectedType = typeId;
-        document.getElementById('view-type-select').classList.add('hidden');
-        document.getElementById('view-draft').classList.remove('hidden');
-        document.getElementById('current-type-label').innerText = `タイプ: ${typeId}`;
-        nextPick();
-    }
-
-    // レアリティ抽選ロジック (ここを後から調整可能)
-    function getRarityCriteria(pickIndex) {
-        // pickIndexは0〜19 (計20回選択で40枚)
-        if(pickIndex === 0 || pickIndex === 19) return [2, 3]; // 最初と最後は高レア
-        return [0, 1, 2]; // 途中の通常回
-    }
-
-    function nextPick() {
-        if(currentPickCount >= 20) {
-            alert("デッキ完成！");
-            return;
-        }
-
-        const allowedRarities = getRarityCriteria(currentPickCount);
-        
-        // 抽選プール作成 (自タイプ or ニュートラル) かつ (レア度条件) かつ (同名3枚未満)
-        const pool = activeCards.filter(c => 
-            (c.type === selectedType || c.type === 0) && 
-            allowedRarities.includes(c.rarity) &&
-            myDeck.filter(dc => dc.id === c.id).length < 3
-        );
-
-        // Aセット2枚、Bセット2枚をランダム抽出
-        const shuffled = pool.sort(() => 0.5 - Math.random());
-        currentOptions.A = [shuffled[0], shuffled[1]];
-        currentOptions.B = [shuffled[2], shuffled[3]];
-
-        renderDraftOptions();
-    }
-
-    function renderDraftOptions() {
-        document.getElementById('draft-progress').innerText = `進捗: ${currentPickCount} / 20 選択`;
-        renderSet('A');
-        renderSet('B');
-    }
-
-    function renderSet(label) {
-        const container = document.getElementById(`display-${label}`);
-        container.innerHTML = '';
-        currentOptions[label].forEach(card => {
-            const div = document.createElement('div');
-            div.className = 'card-box';
-            div.innerHTML = `
-                <div class="card-img">${card.image_id}</div>
-                <small>${card.name}</small><br>
-                <small>R:${card.rarity}</small>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    function handlePick(label) {
-        myDeck.push(...currentOptions[label]);
-        currentPickCount++;
-        document.getElementById('deck-count').innerText = myDeck.length;
-        nextPick();
-    }
-</script>
-
-</body>
-</html>
+            <h3>使用するパックを選択 (1弾〜7弾)
+                
