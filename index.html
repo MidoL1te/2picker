@@ -139,4 +139,79 @@
         for(let i=0; i<=7; i++) {
             const div = document.createElement('div');
             const typeName = (i == 0) ? "ニュートラル" : "タイプ " + i;
-            div.innerHTML = `<div class="acc-header" onclick="this.nextElementSibling.classList.toggle('active
+            div.innerHTML = `<div class="acc-header" onclick="this.nextElementSibling.classList.toggle('active')">${typeName} ▼</div>
+                <div class="acc-body">${masterCards.filter(c=>c.type==i).map(c=>`<label style="display:block; padding:5px 0;"><input type="checkbox" onchange="const card=masterCards.find(mc=>mc.id=='${c.id}'); if(card)card.isBanned=!this.checked" checked> ${c.name}</label>`).join('')}</div>`;
+            container.appendChild(div);
+        }
+    }
+
+    function enterDraft() {
+        const selectedPacks = Array.from(document.querySelectorAll('.pack-chk:checked')).map(el => parseInt(el.value));
+        if(selectedPacks.length === 0) { alert("パックを少なくとも1つ選択してください"); return; }
+        
+        // 選択されたパックに含まれるカードのみを抽出（0弾もここに含まれます）
+        activeCards = masterCards.filter(c => !c.isBanned && selectedPacks.includes(c.pack));
+        
+        document.getElementById('view-setup').classList.add('hidden');
+        document.getElementById('view-type-select').classList.remove('hidden');
+        const container = document.getElementById('type-options');
+        container.innerHTML = '';
+        for(let i=1; i<=7; i++) {
+            const btn = document.createElement('button'); btn.className = 'btn btn-main'; btn.style.height = '80px';
+            btn.innerText = `タイプ ${i}`; btn.onclick = () => startDraft(i);
+            container.appendChild(btn);
+        }
+    }
+
+    function startDraft(typeId) {
+        selectedType = typeId;
+        document.getElementById('view-type-select').classList.add('hidden');
+        document.getElementById('view-draft').classList.remove('hidden');
+        document.getElementById('current-type-label').innerText = `タイプ: ${typeId}`;
+        nextPick();
+    }
+
+    function nextPick(isReroll = false) {
+        if(currentPickCount >= 20 && !isReroll) { alert("構築完了！"); return; }
+        const rarities = isReroll ? [0, 1, 2, 3] : (currentPickCount === 0 || currentPickCount === 19 ? [2, 3] : [0, 1, 2, 3]);
+        const pool = activeCards.filter(c => (c.type === selectedType || c.type === 0) && rarities.includes(c.rarity) && myDeck.filter(dc => dc.id === c.id).length < 3);
+        
+        if (pool.length < 4) { alert("カード不足です。設定を見直してください。"); return; }
+        const shuffled = pool.sort(() => 0.5 - Math.random());
+        currentOptions.A = [shuffled[0], shuffled[1]]; currentOptions.B = [shuffled[2], shuffled[3]];
+        renderChoices();
+    }
+
+    function renderChoices() {
+        document.getElementById('draft-progress').innerText = `${currentPickCount} / 20 Pick`;
+        ['A', 'B'].forEach(L => {
+            const container = document.getElementById(`display-${L}`); container.innerHTML = '';
+            currentOptions[L].forEach(c => {
+                container.innerHTML += `<div class="card-item" onclick="showDetail('${c.id}')"><img src="images/${c.image_id}.png" class="card-img" onerror="this.src='https://via.placeholder.com/160x220?text=No+Image'"></div>`;
+            });
+        });
+    }
+
+    function showDetail(cardId) {
+        const card = masterCards.find(c => c.id == cardId);
+        document.getElementById('detail-name').innerText = card.name;
+        document.getElementById('detail-cost').innerText = `コスト: ${card.cost}`;
+        document.getElementById('detail-desc').innerText = card.desc;
+        openModal('modal-detail');
+    }
+
+    function handlePick(L) {
+        myDeck.push(...currentOptions[L]);
+        currentPickCount++;
+        updateDeckUI();
+        nextPick();
+    }
+
+    function updateDeckUI() {
+        document.getElementById('deck-count').innerText = myDeck.length;
+        const counts = {}; myDeck.forEach(c => counts[c.name] = (counts[c.name] || 0) + 1);
+        document.getElementById('deck-list-display').innerHTML = Object.entries(counts).map(([n, c]) => `<div style="background:#334155; padding:5px; border-radius:3px;">${n} ×${c}</div>`).join('');
+    }
+</script>
+</body>
+</html>
