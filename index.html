@@ -141,8 +141,8 @@
             const container = document.getElementById(`display-${L}`);
             container.innerHTML = '';
             currentOptions[L].forEach(c => {
-                // パスを相対形式にし、キャッシュバスター（?v=...）を付与
-                const imgPath = `images/${c.image_id}.png`;
+                // フォルダ名を「image」に変更
+                const imgPath = `image/${c.image_id}.png`;
                 container.innerHTML += `
                     <div class="card-item" onclick="showDetail('${c.id}')">
                         <img src="${imgPath}" 
