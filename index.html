@@ -2,31 +2,28 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>2Pick Deck Builder - Extended</title>
+    <title>2Pick Deck Builder</title>
     <style>
         :root { --primary: #2c3e50; --accent: #e74c3c; --bg: #0f172a; --card-panel: rgba(30, 41, 59, 0.7); --text: #f8fafc; }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; justify-content: center; }
         .app-container { width: 1100px; min-height: 100vh; padding: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.5); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
         .hidden { display: none !important; }
         
-        /* ボタン */
         .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; text-align: center; }
         .btn-main { background: #3b82f6; color: white; box-shadow: 0 4px 0 #1d4ed8; }
         .btn-main:active { transform: translateY(2px); box-shadow: 0 2px 0 #1d4ed8; }
         .btn-pick { background: linear-gradient(180deg, #06b6d4 0%, #0891b2 100%); color: white; width: 180px; font-size: 1.1rem; border: 1px solid #22d3ee; margin-top: 15px; }
         .btn-reroll { background: linear-gradient(180deg, #1e293b 0%, #334155 100%); color: #38bdf8; border: 1px solid #38bdf8; padding: 10px 20px; font-size: 0.9rem; }
         
-        /* モーダル */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
         .modal-content { background: #1e293b; padding: 40px; width: 600px; border-radius: 15px; border: 1px solid #334155; position: relative; }
 
-        /* メインエリア */
         .selection-area { display: flex; align-items: center; justify-content: center; gap: 30px; margin-top: 50px; }
         .option-panel { background: var(--card-panel); border: 2px solid #334155; padding: 25px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; }
-        .card-group { display: flex; gap: 15px; }
-        .card-item { width: 160px; transition: transform 0.2s; cursor: help; }
+        .card-group { display: flex; gap: 15px; min-height: 220px; }
+        .card-item { width: 160px; transition: transform 0.2s; cursor: help; position: relative; }
         .card-item:hover { transform: scale(1.05); }
-        .card-img { width: 100%; height: auto; border-radius: 8px; border: 2px solid #475569; }
+        .card-img { width: 100%; height: auto; border-radius: 8px; border: 2px solid #475569; display: block; }
 
         .center-controls { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 250px; }
         .reroll-desc { font-size: 0.75rem; color: #94a3b8; text-align: center; line-height: 1.4; }
@@ -52,28 +49,10 @@
         </div>
     </div>
 
-    <div id="modal-ban" class="modal">
-        <div class="modal-content">
-            <h2 style="color:#38bdf8">カードBAN設定</h2>
-            <div id="accordion-container" style="max-height:400px; overflow-y:auto;"></div>
-            <br>
-            <button class="btn btn-main" style="width:100%" onclick="closeModal('modal-ban')">保存して閉じる</button>
-        </div>
-    </div>
+    <div id="modal-ban" class="modal"><div class="modal-content"><h2 style="color:#38bdf8">カードBAN設定</h2><div id="accordion-container" style="max-height:400px; overflow-y:auto;"></div><br><button class="btn btn-main" style="width:100%" onclick="closeModal('modal-ban')">閉じる</button></div></div>
+    <div id="modal-detail" class="modal" onclick="closeModal('modal-detail')"><div class="modal-content" onclick="event.stopPropagation()"><h2 id="detail-name" style="color:#38bdf8; border-bottom:1px solid #334155; padding-bottom:10px;"></h2><p id="detail-cost" style="font-weight:bold; color:#fbbf24;"></p><p id="detail-desc" style="line-height:1.6; font-size:1.1rem;"></p><button class="btn btn-main" style="background:#475569; width:100%" onclick="closeModal('modal-detail')">閉じる</button></div></div>
 
-    <div id="modal-detail" class="modal" onclick="closeModal('modal-detail')">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <h2 id="detail-name" style="color:#38bdf8; border-bottom:1px solid #334155; padding-bottom:10px;"></h2>
-            <p id="detail-cost" style="font-weight:bold; color:#fbbf24;"></p>
-            <p id="detail-desc" style="line-height:1.6; font-size:1.1rem;"></p>
-            <button class="btn btn-main" style="background:#475569; width:100%" onclick="closeModal('modal-detail')">閉じる</button>
-        </div>
-    </div>
-
-    <div id="view-type-select" class="hidden">
-        <h2 style="text-align:center;">リーダー(タイプ)を選択</h2>
-        <div id="type-options" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding:20px;"></div>
-    </div>
+    <div id="view-type-select" class="hidden"><h2 style="text-align:center;">リーダー(タイプ)を選択</h2><div id="type-options" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding:20px;"></div></div>
 
     <div id="view-draft" class="hidden">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #334155; padding-bottom: 15px;">
@@ -81,23 +60,11 @@
             <div id="draft-progress" style="font-size:1.5rem; font-weight:bold;">0 / 20 Pick</div>
         </div>
         <div class="selection-area">
-            <div class="option-panel">
-                <div class="card-group" id="display-A"></div>
-                <button class="btn btn-pick" onclick="handlePick('A')">選択</button>
-            </div>
-            <div class="center-controls">
-                <button class="btn btn-reroll" onclick="nextPick(true)">カード再抽選</button>
-                <div class="reroll-desc">全レアリティから<br>再抽選されます</div>
-            </div>
-            <div class="option-panel">
-                <div class="card-group" id="display-B"></div>
-                <button class="btn btn-pick" onclick="handlePick('B')">選択</button>
-            </div>
+            <div class="option-panel"><div class="card-group" id="display-A"></div><button class="btn btn-pick" onclick="handlePick('A')">選択</button></div>
+            <div class="center-controls"><button class="btn btn-reroll" onclick="nextPick(true)">カード再抽選</button><div class="reroll-desc">全レアリティから<br>再抽選されます</div></div>
+            <div class="option-panel"><div class="card-group" id="display-B"></div><button class="btn btn-pick" onclick="handlePick('B')">選択</button></div>
         </div>
-        <div style="margin-top: 50px;">
-            <h4 style="color:#94a3b8;">現在のデッキ (<span id="deck-count">0</span> / 40)</h4>
-            <div id="deck-list-display" class="deck-grid"></div>
-        </div>
+        <div style="margin-top: 50px;"><h4 style="color:#94a3b8;">現在のデッキ (<span id="deck-count">0</span> / 40)</h4><div id="deck-list-display" class="deck-grid"></div></div>
     </div>
 </div>
 
@@ -105,29 +72,34 @@
     let masterCards = []; let activeCards = []; let myDeck = [];
     let selectedType = 0; let currentPickCount = 0; let currentOptions = { A: [], B: [] };
 
+    // CSV読み込み (トリム処理を強化)
     window.addEventListener('DOMContentLoaded', () => {
         fetch('data/cards.csv')
             .then(res => res.text())
             .then(text => {
-                const lines = text.split(/\r\n|\n/);
+                const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+                masterCards = [];
                 for (let i = 1; i < lines.length; i++) {
-                    const d = lines[i].split(',');
-                    if (d.length < 8) continue;
+                    const d = lines[i].split(',').map(item => item.trim());
+                    if (d.length < 6) continue;
                     masterCards.push({ 
-                        id: d[0].trim(), name: d[1].trim(), pack: parseInt(d[2]), type: parseInt(d[3]), 
-                        rarity: parseInt(d[4]), image_id: d[5].trim(), cost: d[6].trim(), desc: d[7].trim(), isBanned: false 
+                        id: d[0], name: d[1], pack: parseInt(d[2]), type: parseInt(d[3]), 
+                        rarity: parseInt(d[4]), image_id: d[5], 
+                        cost: d[6] || "0", desc: d[7] || "能力なし", isBanned: false 
                     });
                 }
-                document.getElementById('loading-status').innerText = "データの同期完了。";
+                document.getElementById('loading-status').innerText = "ロード完了";
                 renderBanSettings();
-            }).catch(e => { document.getElementById('loading-status').innerText = "CSV読み込み失敗。"; });
+                renderPackChecks();
+            }).catch(e => { console.error(e); document.getElementById('loading-status').innerText = "読み込み失敗"; });
     });
 
-    // パック選択肢（0〜7弾）を生成
-    const packArea = document.getElementById('pack-checkboxes');
-    for(let i=0; i<=7; i++) {
-        const labelText = i === 0 ? "ベーシック(0弾)" : `${i}弾`;
-        packArea.innerHTML += `<label style="background:#334155; padding:8px 15px; border-radius:5px; cursor:pointer;"><input type="checkbox" class="pack-chk" value="${i}" checked> ${labelText}</label>`;
+    function renderPackChecks() {
+        const packArea = document.getElementById('pack-checkboxes');
+        for(let i=0; i<=7; i++) {
+            const labelText = i === 0 ? "ベーシック" : `${i}弾`;
+            packArea.innerHTML += `<label style="background:#334155; padding:8px 15px; border-radius:5px; cursor:pointer;"><input type="checkbox" class="pack-chk" value="${i}" checked> ${labelText}</label>`;
+        }
     }
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
@@ -147,11 +119,8 @@
 
     function enterDraft() {
         const selectedPacks = Array.from(document.querySelectorAll('.pack-chk:checked')).map(el => parseInt(el.value));
-        if(selectedPacks.length === 0) { alert("パックを少なくとも1つ選択してください"); return; }
-        
-        // 選択されたパックに含まれるカードのみを抽出（0弾もここに含まれます）
+        if(selectedPacks.length === 0) return alert("パックを選択してください");
         activeCards = masterCards.filter(c => !c.isBanned && selectedPacks.includes(c.pack));
-        
         document.getElementById('view-setup').classList.add('hidden');
         document.getElementById('view-type-select').classList.remove('hidden');
         const container = document.getElementById('type-options');
@@ -172,37 +141,32 @@
     }
 
     function nextPick(isReroll = false) {
-        if(currentPickCount >= 20 && !isReroll) { alert("構築完了！"); return; }
+        if(currentPickCount >= 20 && !isReroll) return alert("完了");
         const rarities = isReroll ? [0, 1, 2, 3] : (currentPickCount === 0 || currentPickCount === 19 ? [2, 3] : [0, 1, 2, 3]);
         const pool = activeCards.filter(c => (c.type === selectedType || c.type === 0) && rarities.includes(c.rarity) && myDeck.filter(dc => dc.id === c.id).length < 3);
-        
-        if (pool.length < 4) { alert("カード不足です。設定を見直してください。"); return; }
+        if (pool.length < 4) return alert("カード不足");
         const shuffled = pool.sort(() => 0.5 - Math.random());
         currentOptions.A = [shuffled[0], shuffled[1]]; currentOptions.B = [shuffled[2], shuffled[3]];
         renderChoices();
     }
 
-/* --- index.html の renderChoices 関数だけをこれに差し替えてテストしてみてください --- */
-
-function renderChoices() {
-    document.getElementById('draft-progress').innerText = `${currentPickCount} / 20 Pick`;
-    ['A', 'B'].forEach(L => {
-        const container = document.getElementById(`display-${L}`);
-        container.innerHTML = '';
-        currentOptions[L].forEach(c => {
-            // デバッグ：コンソールに「今からこの画像を読み込むよ」と表示させる
-            console.log(`Loading image for: ${c.name}, ID: ${c.image_id}`);
-            
-            container.innerHTML += `
-                <div class="card-item" onclick="showDetail('${c.id}')">
-                    <img src="./images/${c.image_id}.png" 
-                         class="card-img" 
-                         alt="${c.name}" 
-                         onerror="console.error('FAILED TO LOAD:', this.src); this.src='https://via.placeholder.com/160x220?text=Error:${c.image_id}'">
-                </div>`;
+    function renderChoices() {
+        document.getElementById('draft-progress').innerText = `${currentPickCount} / 20 Pick`;
+        ['A', 'B'].forEach(L => {
+            const container = document.getElementById(`display-${L}`);
+            container.innerHTML = '';
+            currentOptions[L].forEach(c => {
+                // 画像パスを相対パス（./images/）に変更
+                container.innerHTML += `
+                    <div class="card-item" onclick="showDetail('${c.id}')">
+                        <img src="./images/${c.image_id}.png" 
+                             class="card-img" 
+                             alt="${c.name}" 
+                             onerror="this.onerror=null; this.src='https://via.placeholder.com/160x220?text=${encodeURIComponent(c.name)}'">
+                    </div>`;
+            });
         });
-    });
-}
+    }
 
     function showDetail(cardId) {
         const card = masterCards.find(c => c.id == cardId);
