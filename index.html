@@ -46,5 +46,233 @@
     <div id="view-setup">
         <h1>デッキ構築設定</h1>
         <div class="pack-selection">
-            <h3>使用するパックを選択 (1弾〜7弾)
-                
+            <h3>使用するパックを選択 (1弾〜7弾)</h3>
+            <div id="pack-checkboxes"></div>
+        </div>
+        <br>
+        <button type="button" class="btn-main" style="background:#7f8c8d" onclick="openBanModal()">詳細設定 (カードBAN)</button>
+        <hr>
+        <button id="btn-enter" class="btn-main" onclick="enterDraft()">入場する</button>
+    </div>
+
+    <div id="modal-ban" class="modal hidden">
+        <div class="modal-content">
+            <h2 style="margin-top:0">カードBAN設定</h2>
+            <p><small>チェックを入れているカードが抽選対象になります。</small></p>
+            <div id="accordion-container"></div>
+            <br>
+            <button type="button" class="btn-main" onclick="closeBanModal()">設定を閉じる</button>
+        </div>
+    </div>
+
+    <div id="view-type-select" class="hidden">
+        <h2>リーダー(タイプ)を選択</h2>
+        <div class="type-select-grid" id="type-options"></div>
+    </div>
+
+    <div id="view-draft" class="hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+            <h2 id="current-type-label">タイプ: </h2>
+            <h3 id="draft-progress">0 / 20 選択</h3>
+        </div>
+        <div class="selection-grid">
+            <div class="option-set" onclick="handlePick('A')">
+                <div class="card-display" id="display-A"></div>
+                <div id="name-A" style="font-weight:bold"></div>
+            </div>
+            <div class="option-set" onclick="handlePick('B')">
+                <div class="card-display" id="display-B"></div>
+                <div id="name-B" style="font-weight:bold"></div>
+            </div>
+        </div>
+        <div id="deck-info" style="margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 10px;">
+            <h4>現在のデッキ (<span id="deck-count">0</span> / 40枚)</h4>
+            <div id="deck-list-display" style="font-size: 0.9rem; column-count: 3;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /** ========================================
+     * 1. データ定義と初期化
+     * ======================================== */
+    let masterCards = []; 
+    let activeCards = []; 
+    let myDeck = [];
+    let selectedType = 0;
+    let currentPickCount = 0;
+    let currentOptions = { A: [], B: [] };
+
+    // テスト用データの自動生成 (本来はCSVから流し込む)
+    function initData() {
+        for(let i=1; i<=150; i++) {
+            masterCards.push({
+                id: i,
+                name: `カード名_${i}`,
+                pack: Math.floor(Math.random() * 7) + 1, 
+                type: Math.floor(Math.random() * 8), 
+                rarity: Math.floor(Math.random() * 4), 
+                image_id: `IMG_${i}`,
+                isBanned: false
+            });
+        }
+    }
+    initData();
+
+    // パック選択用チェックボックス生成
+    const packArea = document.getElementById('pack-checkboxes');
+    for(let i=1; i<=7; i++) {
+        packArea.innerHTML += `<label><input type="checkbox" class="pack-chk" value="${i}" checked> ${i}弾</label>`;
+    }
+
+    /** ========================================
+     * 2. 設定モーダル・アコーディオン制御
+     * ======================================== */
+    function openBanModal() {
+        const modal = document.getElementById('modal-ban');
+        modal.classList.remove('hidden');
+        renderBanSettings();
+    }
+
+    function closeBanModal() {
+        const modal = document.getElementById('modal-ban');
+        modal.classList.add('hidden');
+    }
+
+    function renderBanSettings() {
+        const container = document.getElementById('accordion-container');
+        if (container.innerHTML !== '') return; // 二重生成防止
+
+        for(let i=0; i<=7; i++) {
+            const typeName = i === 0 ? "ニュートラル (0)" : `タイプ ${i}`;
+            const section = document.createElement('div');
+            section.className = 'accordion';
+            section.innerHTML = `
+                <div class="acc-header" onclick="toggleAcc(this)">${typeName} ▼</div>
+                <div class="acc-body">
+                    ${masterCards.filter(c => c.type === i).map(c => `
+                        <label style="display:block; border-bottom:1px solid #f0f0f0; padding:5px;">
+                            <input type="checkbox" onchange="updateBan(${c.id}, this.checked)" ${!c.isBanned ? 'checked' : ''}> 
+                            ${c.name} [Rarity:${c.rarity}] [Pack:${c.pack}]
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+            container.appendChild(section);
+        }
+    }
+
+    function toggleAcc(header) {
+        const body = header.nextElementSibling;
+        body.classList.toggle('active');
+    }
+
+    function updateBan(cardId, isChecked) {
+        const card = masterCards.find(c => c.id === cardId);
+        if(card) card.isBanned = !isChecked;
+    }
+
+    /** ========================================
+     * 3. リーダー選択・入場
+     * ======================================== */
+    function enterDraft() {
+        const selectedPacks = Array.from(document.querySelectorAll('.pack-chk:checked')).map(el => parseInt(el.value));
+        if(selectedPacks.length === 0) { alert("パックを選択してください"); return; }
+
+        activeCards = masterCards.filter(c => !c.isBanned && (c.pack === 0 || selectedPacks.includes(c.pack)));
+        
+        document.getElementById('view-setup').classList.add('hidden');
+        document.getElementById('view-type-select').classList.remove('hidden');
+        
+        const container = document.getElementById('type-options');
+        container.innerHTML = '';
+        for(let i=1; i<=7; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'type-btn';
+            btn.innerHTML = `リーダータイプ ${i}<br><small>レア2or3確定</small>`;
+            btn.onclick = () => startDraft(i);
+            container.appendChild(btn);
+        }
+    }
+
+    /** ========================================
+     * 4. ドラフト(2Pick)メインロジック
+     * ======================================== */
+    
+    // 【重要：ここを変えればレアリティ確率が変わります】
+    function getRarityFilter(pickIndex) {
+        // pickIndexは 0(最初) から 19(最後)
+        if(pickIndex === 0 || pickIndex === 19) {
+            return [2, 3]; // 1回目と20回目はレア度2か3のみ
+        }
+        return [0, 1, 2, 3]; // それ以外は全レアリティ
+    }
+
+    function startDraft(typeId) {
+        selectedType = typeId;
+        document.getElementById('view-type-select').classList.add('hidden');
+        document.getElementById('view-draft').classList.remove('hidden');
+        document.getElementById('current-type-label').innerText = `タイプ: ${typeId}`;
+        nextPick();
+    }
+
+    function nextPick() {
+        if(currentPickCount >= 20) {
+            alert("40枚のデッキが完成しました！");
+            return;
+        }
+
+        const allowedRarities = getRarityFilter(currentPickCount);
+        
+        // 抽選プール：(選択タイプorニュートラル) かつ (レア度) かつ (BANされていない) かつ (デッキに3枚未満)
+        const pool = activeCards.filter(c => 
+            (c.type === selectedType || c.type === 0) && 
+            allowedRarities.includes(c.rarity) &&
+            myDeck.filter(dc => dc.id === c.id).length < 3
+        );
+
+        if(pool.length < 4) { alert("カードが足りません！BAN設定を緩めてください。"); return; }
+
+        const shuffled = pool.sort(() => 0.5 - Math.random());
+        currentOptions.A = [shuffled[0], shuffled[1]];
+        currentOptions.B = [shuffled[2], shuffled[3]];
+
+        renderChoices();
+    }
+
+    function renderChoices() {
+        document.getElementById('draft-progress').innerText = `${currentPickCount + 1} / 20 選択目`;
+        ['A', 'B'].forEach(label => {
+            const container = document.getElementById(`display-${label}`);
+            container.innerHTML = '';
+            currentOptions[label].forEach(card => {
+                container.innerHTML += `
+                    <div class="card-box">
+                        <div class="card-img">画像:${card.image_id}</div>
+                        <div style="font-size:0.7rem">${card.name}</div>
+                    </div>`;
+            });
+            document.getElementById(`name-${label}`).innerText = 
+                `${currentOptions[label][0].name} & ${currentOptions[label][1].name}`;
+        });
+    }
+
+    function handlePick(label) {
+        myDeck.push(...currentOptions[label]);
+        currentPickCount++;
+        updateDeckList();
+        nextPick();
+    }
+
+    function updateDeckList() {
+        document.getElementById('deck-count').innerText = myDeck.length;
+        const counts = {};
+        myDeck.forEach(c => counts[c.name] = (counts[c.name] || 0) + 1);
+        
+        const listHtml = Object.entries(counts).map(([name, count]) => `<div>${name} ×${count}</div>`).join('');
+        document.getElementById('deck-list-display').innerHTML = listHtml;
+    }
+</script>
+
+</body>
+</html>
