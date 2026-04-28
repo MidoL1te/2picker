@@ -182,15 +182,27 @@
         renderChoices();
     }
 
-    function renderChoices() {
-        document.getElementById('draft-progress').innerText = `${currentPickCount} / 20 Pick`;
-        ['A', 'B'].forEach(L => {
-            const container = document.getElementById(`display-${L}`); container.innerHTML = '';
-            currentOptions[L].forEach(c => {
-                container.innerHTML += `<div class="card-item" onclick="showDetail('${c.id}')"><img src="images/${c.image_id}.png" class="card-img" onerror="this.src='https://via.placeholder.com/160x220?text=No+Image'"></div>`;
-            });
+/* --- index.html の renderChoices 関数だけをこれに差し替えてテストしてみてください --- */
+
+function renderChoices() {
+    document.getElementById('draft-progress').innerText = `${currentPickCount} / 20 Pick`;
+    ['A', 'B'].forEach(L => {
+        const container = document.getElementById(`display-${L}`);
+        container.innerHTML = '';
+        currentOptions[L].forEach(c => {
+            // デバッグ：コンソールに「今からこの画像を読み込むよ」と表示させる
+            console.log(`Loading image for: ${c.name}, ID: ${c.image_id}`);
+            
+            container.innerHTML += `
+                <div class="card-item" onclick="showDetail('${c.id}')">
+                    <img src="images/${c.image_id}.png" 
+                         class="card-img" 
+                         alt="${c.name}" 
+                         onerror="console.error('FAILED TO LOAD:', this.src); this.src='https://via.placeholder.com/160x220?text=Error:${c.image_id}'">
+                </div>`;
         });
-    }
+    });
+}
 
     function showDetail(cardId) {
         const card = masterCards.find(c => c.id == cardId);
