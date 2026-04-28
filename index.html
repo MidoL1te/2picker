@@ -195,7 +195,7 @@ function renderChoices() {
             
             container.innerHTML += `
                 <div class="card-item" onclick="showDetail('${c.id}')">
-                    <img src="images/${c.image_id}.png" 
+                    <img src="./images/${c.image_id}.png" 
                          class="card-img" 
                          alt="${c.name}" 
                          onerror="console.error('FAILED TO LOAD:', this.src); this.src='https://via.placeholder.com/160x220?text=Error:${c.image_id}'">
