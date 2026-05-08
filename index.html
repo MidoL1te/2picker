@@ -110,7 +110,7 @@
     const REROLL_LIMITS = { 1: 2, 2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 2 };
 
     let masterCards = []; let activeCards = []; let myDeck = [];
-    let selectedType = 0; let currentPickCount = 1; 
+    let selectedType = 0;
     let currentOptions = { A: [], B: [] };
     let remainingRerolls = 0;
     let typePreviewCards = {};
@@ -187,7 +187,8 @@
     }
 
     function nextPick(isReroll = false) {
-        if(currentPickCount >= 20 && !isReroll) return;
+        // デッキが40枚なら抽選しない
+        if(myDeck.length >= 40 && !isReroll) return;
 
         let targetRarities = [0, 1, 2, 3];
         if (!isReroll) {
@@ -201,10 +202,12 @@
                 targetRarities = [2, 3]; // 最初と最後は金・虹確定
             }
         }
+        }
 
         const drawn = [];
         while(drawn.length < 4) {
             const card = drawOne(targetRarities);
+            // 提示内の重複禁止 + すでに提示候補に入っているものは除外
             if(!drawn.some(d => d.id === card.id)) {
                 drawn.push(card);
             }
@@ -216,7 +219,18 @@
     }
 
     function drawOne(rarities) {
-        const pool = activeCards.filter(c => (Math.random() < NEUTRAL_CHANCE ? c.type === 0 : c.type === selectedType) && rarities.includes(c.rarity));
+        // デッキ内で既に3枚持っているカードを除外するフィルタを追加
+        const currentCounts = {};
+        myDeck.forEach(c => currentCounts[c.id] = (currentCounts[c.id] || 0) + 1);
+
+        const pool = activeCards.filter(c => {
+            const isTypeMatch = (Math.random() < NEUTRAL_CHANCE ? c.type === 0 : c.type === selectedType);
+            const isRarityMatch = rarities.includes(c.rarity);
+            const isUnderLimit = (currentCounts[c.id] || 0) < 3; // 3枚未満ならOK
+            return isTypeMatch && isRarityMatch && isUnderLimit;
+        });
+
+        // 万が一プールが空になった場合のセーフティ
         const finalPool = pool.length > 0 ? pool : activeCards.filter(c => rarities.includes(c.rarity));
         return finalPool[Math.floor(Math.random() * finalPool.length)];
     }
@@ -233,11 +247,9 @@
 
     function handlePick(L) {
         myDeck.push(...currentOptions[L]);
-        currentPickCount++;
-        
         updateUI();
 
-        if(currentPickCount > 20) {
+        if(myDeck.length >= 40) {
             document.getElementById('selection-controls').classList.add('hidden');
             document.getElementById('draft-complete-msg').classList.remove('hidden');
         } else {
@@ -247,11 +259,13 @@
 
     function updateUI() {
         document.getElementById('deck-count').innerText = myDeck.length;
-        const displayCount = Math.min(currentPickCount, 20);
-        document.getElementById('draft-progress').innerText = `${displayCount} / 20 Pick`;
+        
+        // 進捗表示（2枚1組を1Pickとして表示）
+        const pickDisplay = Math.min(Math.floor(myDeck.length / 2), 20);
+        document.getElementById('draft-progress').innerText = `${pickDisplay} / 20 Pick`;
         
         document.getElementById('reroll-count-display').innerText = `残り再抽選: ${remainingRerolls}回`;
-        document.getElementById('reroll-button').disabled = (remainingRerolls <= 0 || currentPickCount > 20);
+        document.getElementById('reroll-button').disabled = (remainingRerolls <= 0 || myDeck.length >= 40);
 
         const history = document.getElementById('history-display');
         const grouped = [];
