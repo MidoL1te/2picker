@@ -34,7 +34,7 @@
         .history-item { width: 100%; position: relative; }
         .history-img { width: 100%; height: auto; border-radius: 4px; border: 1px solid #1e293b; }
         
-        .count-badge { position: absolute; top: -5px; right: -5px; background: rgba(0,0,0,0.85); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid #38bdf8; pointer-events: none; }
+        .count-badge { position: absolute; top: -5px; right: -5px; background: rgba(0,0,0,0.85); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid #38bdf8; pointer-events: none; z-index: 10; }
 
         .center-controls { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 180px; }
         .reroll-info { font-size: 0.8rem; color: #38bdf8; }
@@ -121,7 +121,11 @@
             for (let i = 1; i < lines.length; i++) {
                 const d = lines[i].split(',').map(item => item.trim());
                 if (d.length < 6) continue;
-                masterCards.push({ id: d[0], name: d[1], pack: parseInt(d[2]), type: parseInt(d[3]), rarity: parseInt(d[4]), image_id: d[5], cost: parseInt(d[6]), desc: d[7].replace(/\\n/g, '\n'), isBanned: false });
+                masterCards.push({ 
+                    id: d[0], name: d[1], pack: parseInt(d[2]), type: parseInt(d[3]), 
+                    rarity: parseInt(d[4]), image_id: d[5], cost: parseInt(d[6]), 
+                    desc: d[7].replace(/\\n/g, '\n'), isBanned: false 
+                });
             }
             document.getElementById('loading-status').innerText = "Load OK";
             renderPackChecks();
@@ -183,8 +187,7 @@
     }
 
     function nextPick(isReroll = false) {
-        // 20回目のPickが完了していたら、入力を受け付けない
-        if(currentPickCount > 20) return;
+        if(currentPickCount >= 20 && !isReroll) return;
 
         let targetRarities = [0, 1, 2, 3];
         if (!isReroll) {
@@ -232,10 +235,9 @@
         myDeck.push(...currentOptions[L]);
         currentPickCount++;
         
-        updateUI(); // 先に枚数と履歴を更新
+        updateUI();
 
         if(currentPickCount > 20) {
-            // 20回目のPickが終了した瞬間にUIを切り替える
             document.getElementById('selection-controls').classList.add('hidden');
             document.getElementById('draft-complete-msg').classList.remove('hidden');
         } else {
@@ -245,11 +247,11 @@
 
     function updateUI() {
         document.getElementById('deck-count').innerText = myDeck.length;
-        // 画面上部の表示は最大20まで
         const displayCount = Math.min(currentPickCount, 20);
         document.getElementById('draft-progress').innerText = `${displayCount} / 20 Pick`;
+        
         document.getElementById('reroll-count-display').innerText = `残り再抽選: ${remainingRerolls}回`;
-        document.getElementById('reroll-button').disabled = (remainingRerolls <= 0);
+        document.getElementById('reroll-button').disabled = (remainingRerolls <= 0 || currentPickCount > 20);
 
         const history = document.getElementById('history-display');
         const grouped = [];
@@ -276,7 +278,6 @@
         if(!c) return;
         document.getElementById('detail-name').innerText = c.name;
         document.getElementById('detail-cost').innerText = `コスト: ${c.cost}`;
-        // 改行を反映させるためinnerTextを使用
         document.getElementById('detail-desc').innerText = c.desc;
         openModal('modal-detail');
     }
