@@ -11,7 +11,6 @@
         
         .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; text-align: center; }
         .btn-main { background: #3b82f6; color: white; box-shadow: 0 4px 0 #1d4ed8; }
-        .btn-main:active { transform: translateY(2px); box-shadow: 0 2px 0 #1d4ed8; }
         .btn-pick { background: linear-gradient(180deg, #06b6d4 0%, #0891b2 100%); color: white; width: 180px; font-size: 1.1rem; border: 1px solid #22d3ee; margin-top: 15px; }
         .btn-reroll { background: linear-gradient(180deg, #1e293b 0%, #334155 100%); color: #38bdf8; border: 1px solid #38bdf8; padding: 10px 20px; font-size: 0.9rem; }
         .btn-reroll:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -36,6 +35,9 @@
         .history-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; margin-top: 10px; }
         .history-item { width: 100%; position: relative; }
         .history-img { width: 100%; height: auto; border-radius: 4px; border: 1px solid #1e293b; }
+        
+        /* 重複枚数バッジ */
+        .count-badge { position: absolute; top: -5px; right: -5px; background: rgba(0,0,0,0.8); color: white; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid #475569; pointer-events: none; }
 
         .center-controls { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 180px; }
         .reroll-info { font-size: 0.8rem; color: #38bdf8; }
@@ -64,7 +66,6 @@
 
     <div id="view-type-select" class="hidden">
         <h2 style="text-align:center;">クラスを選択してください</h2>
-        <p style="text-align:center; color:#94a3b8;">表示されている2枚は初期デッキに含まれます</p>
         <div id="type-options" class="type-select-grid"></div>
     </div>
 
@@ -97,18 +98,15 @@
 </div>
 
 <script>
-    const CLASS_NAMES = {
-        0: "ニュートラル", 1: "エルフ", 2: "ロイヤル", 3: "ウィッチ", 
-        4: "ドラゴン", 5: "ナイトメア", 6: "ビショップ", 7: "ネメシス"
-    };
+    const CLASS_NAMES = { 0: "ニュートラル", 1: "エルフ", 2: "ロイヤル", 3: "ウィッチ", 4: "ドラゴン", 5: "ナイトメア", 6: "ビショップ", 7: "ネメシス" };
     const NEUTRAL_CHANCE = 0.20;
     const REROLL_LIMITS = { 1: 2, 2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 2 };
 
     let masterCards = []; let activeCards = []; let myDeck = [];
-    let selectedType = 0; let currentPickCount = 1; // 1回目はクラス選択時の2枚なので1から開始
+    let selectedType = 0; let currentPickCount = 1; 
     let currentOptions = { A: [], B: [] };
     let remainingRerolls = 0;
-    let typePreviewCards = {}; // 各タイプの初期2枚を保持
+    let typePreviewCards = {};
 
     window.addEventListener('DOMContentLoaded', () => {
         fetch('data/cards.csv').then(res => res.text()).then(text => {
@@ -116,7 +114,7 @@
             for (let i = 1; i < lines.length; i++) {
                 const d = lines[i].split(',').map(item => item.trim());
                 if (d.length < 6) continue;
-                masterCards.push({ id: d[0], name: d[1], pack: parseInt(d[2]), type: parseInt(d[3]), rarity: parseInt(d[4]), image_id: d[5], cost: d[6], desc: d[7], isBanned: false });
+                masterCards.push({ id: d[0], name: d[1], pack: parseInt(d[2]), type: parseInt(d[3]), rarity: parseInt(d[4]), image_id: d[5], cost: parseInt(d[6]), desc: d[7], isBanned: false });
             }
             document.getElementById('loading-status').innerText = "Load OK";
             renderPackChecks();
@@ -151,13 +149,10 @@
         for(let i=1; i<=7; i++) {
             const pool = activeCards.filter(c => c.type === i && c.rarity >= 2);
             typePreviewCards[i] = pool.sort(() => 0.5 - Math.random()).slice(0, 2);
-            
             const row = document.createElement('div');
             row.className = 'type-option-row';
-            row.innerHTML = `
-                <button class="btn btn-main" style="width:180px;" onclick="startDraft(${i})">${CLASS_NAMES[i]}</button>
-                <div class="preview-imgs">${typePreviewCards[i].map(p => `<img src="image/${p.image_id}.png" class="preview-img" onerror="this.src='https://via.placeholder.com/70x95?text=Card'">`).join('')}</div>
-            `;
+            row.innerHTML = `<button class="btn btn-main" style="width:180px;" onclick="startDraft(${i})">${CLASS_NAMES[i]}</button>
+                <div class="preview-imgs">${typePreviewCards[i].map(p => `<img src="image/${p.image_id}.png" class="preview-img" onerror="this.src='https://via.placeholder.com/70x95?text=Card'">`).join('')}</div>`;
             container.appendChild(row);
         }
     }
@@ -165,7 +160,7 @@
     function startDraft(classId) {
         selectedType = classId;
         remainingRerolls = REROLL_LIMITS[classId] || 0;
-        myDeck = [...typePreviewCards[classId]]; // 最初の2枚を即座にデッキへ
+        myDeck = [...typePreviewCards[classId]];
         document.getElementById('view-type-select').classList.add('hidden');
         document.getElementById('view-draft').classList.remove('hidden');
         document.getElementById('current-type-label').innerText = `クラス: ${CLASS_NAMES[classId]}`;
@@ -187,22 +182,20 @@
             return;
         }
 
-        // 20回目（最後）は金・虹確定。それ以外は全レアリティ
         let targetRarities = [0, 1, 2, 3];
-        if (!isReroll) {
-            if (currentPickCount === 1 || currentPickCount === 3 || currentPickCount === 5 || currentPickCount === 7 || currentPickCount === 9 || currentPickCount === 11 || currentPickCount === 13 || currentPickCount === 15 || currentPickCount === 17) {
-                targetRarities = [0];
-            }
-            if (currentPickCount === 2 || currentPickCount === 4 || currentPickCount === 8 || currentPickCount === 10 || currentPickCount === 12 || currentPickCount === 16 || currentPickCount === 18) {
-                targetRarities = [1];
-            }
-            if (currentPickCount === 6 || currentPickCount === 14 || currentPickCount === 19) {
-                targetRarities = [2, 3]; // 最初と最後は金・虹確定
+        if (!isReroll && currentPickCount === 19) targetRarities = [2, 3];
+
+        // 重複なしで4枚選出する
+        const drawn = [];
+        while(drawn.length < 4) {
+            const card = drawOne(targetRarities);
+            if(!drawn.some(d => d.id === card.id)) {
+                drawn.push(card);
             }
         }
 
-        currentOptions.A = [drawOne(targetRarities), drawOne(targetRarities)];
-        currentOptions.B = [drawOne(targetRarities), drawOne(targetRarities)];
+        currentOptions.A = [drawn[0], drawn[1]];
+        currentOptions.B = [drawn[2], drawn[3]];
         renderChoices();
         updateUI();
     }
@@ -236,9 +229,24 @@
         document.getElementById('reroll-button').disabled = (remainingRerolls <= 0);
 
         const history = document.getElementById('history-display');
-        history.innerHTML = myDeck.map(c => `
-            <div class="history-item" onclick="showDetail('${c.id}')">
-                <img src="image/${c.image_id}.png" class="history-img" title="${c.name}">
+        
+        // デッキを「コスト順 -> ID順」にソートし、重複をカウントする
+        const grouped = [];
+        const sortedDeck = [...myDeck].sort((a, b) => (a.cost - b.cost) || (a.id.localeCompare(b.id)));
+        
+        sortedDeck.forEach(card => {
+            const existing = grouped.find(g => g.id === card.id);
+            if (existing) {
+                existing.count++;
+            } else {
+                grouped.push({ ...card, count: 1 });
+            }
+        });
+
+        history.innerHTML = grouped.map(g => `
+            <div class="history-item" onclick="showDetail('${g.id}')">
+                <img src="image/${g.image_id}.png" class="history-img" title="${g.name}">
+                <div class="count-badge">×${g.count}</div>
             </div>`).join('');
     }
 
