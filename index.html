@@ -190,18 +190,18 @@
         // デッキが40枚なら抽選しない
         if(myDeck.length >= 40 && !isReroll) return;
 
+        // 次の2枚を追加した時に40枚目になるなら、金・虹確定にする
         let targetRarities = [0, 1, 2, 3];
         if (!isReroll) {
-            if (currentPickCount === 1 || currentPickCount === 3 || currentPickCount === 5 || currentPickCount === 7 || currentPickCount === 9 || currentPickCount === 11 || currentPickCount === 13 || currentPickCount === 15 || currentPickCount === 17) {
+            if (myDeck.length === 2 || myDeck.length === 6 || myDeck.length === 10 || myDeck.length === 14 || myDeck.length === 18 || myDeck.length === 22 || myDeck.length === 26 || myDeck.length === 30 || myDeck.length === 34) {
                 targetRarities = [0];
             }
-            if (currentPickCount === 2 || currentPickCount === 4 || currentPickCount === 8 || currentPickCount === 10 || currentPickCount === 12 || currentPickCount === 16 || currentPickCount === 18) {
+            if (myDeck.length === 4 || myDeck.length === 8 || myDeck.length === 16 || myDeck.length === 20 || myDeck.length === 24 || myDeck.length === 32 || myDeck.length === 36) {
                 targetRarities = [1];
             }
-            if (currentPickCount === 6 || currentPickCount === 14 || currentPickCount === 19) {
+            if (myDeck.length === 12 || myDeck.length === 28 || myDeck.length === 38) {
                 targetRarities = [2, 3]; // 最初と最後は金・虹確定
             }
-        }
         }
 
         const drawn = [];
