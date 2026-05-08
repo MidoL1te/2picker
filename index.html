@@ -2,35 +2,42 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>2Pick Deck Builder</title>
+    <title>2Pick Deck Builder Pro</title>
     <style>
         :root { --primary: #2c3e50; --accent: #e74c3c; --bg: #0f172a; --card-panel: rgba(30, 41, 59, 0.7); --text: #f8fafc; }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; justify-content: center; }
         .app-container { width: 1100px; min-height: 100vh; padding: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.5); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
         .hidden { display: none !important; }
         
+        /* ボタン類 */
         .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; text-align: center; }
         .btn-main { background: #3b82f6; color: white; box-shadow: 0 4px 0 #1d4ed8; }
+        .btn-main:hover { background: #2563eb; }
         .btn-main:active { transform: translateY(2px); box-shadow: 0 2px 0 #1d4ed8; }
         .btn-pick { background: linear-gradient(180deg, #06b6d4 0%, #0891b2 100%); color: white; width: 180px; font-size: 1.1rem; border: 1px solid #22d3ee; margin-top: 15px; }
         .btn-reroll { background: linear-gradient(180deg, #1e293b 0%, #334155 100%); color: #38bdf8; border: 1px solid #38bdf8; padding: 10px 20px; font-size: 0.9rem; }
+        .btn-reroll:disabled { opacity: 0.5; cursor: not-allowed; color: #64748b; border-color: #64748b; }
         
+        /* モーダル */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
         .modal-content { background: #1e293b; padding: 40px; width: 600px; border-radius: 15px; border: 1px solid #334155; position: relative; }
 
+        /* レイアウト */
         .selection-area { display: flex; align-items: center; justify-content: center; gap: 30px; margin-top: 50px; }
-        .option-panel { background: var(--card-panel); border: 2px solid #334155; padding: 25px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; }
+        .option-panel { background: var(--card-panel); border: 2px solid #334155; padding: 25px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; min-width: 380px; }
         .card-group { display: flex; gap: 15px; min-height: 220px; }
         .card-item { width: 160px; transition: transform 0.2s; cursor: help; }
         .card-item:hover { transform: scale(1.05); }
         .card-img { width: 100%; height: auto; border-radius: 8px; border: 2px solid #475569; display: block; }
 
-        .center-controls { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 250px; }
-        .reroll-desc { font-size: 0.75rem; color: #94a3b8; text-align: center; line-height: 1.4; }
+        /* タイプ選択画面のプレビュー用 */
+        .type-select-grid { display: grid; grid-template-columns: 1fr; gap: 15px; padding: 20px; }
+        .type-option-row { display: flex; align-items: center; background: rgba(51, 65, 85, 0.5); padding: 15px; border-radius: 12px; gap: 20px; border: 1px solid #475569; }
+        .type-preview-imgs { display: flex; gap: 10px; }
+        .preview-img { width: 80px; border-radius: 4px; border: 1px solid #94a3b8; }
 
-        .acc-header { background: #334155; padding: 12px; cursor: pointer; border-bottom: 1px solid #1e293b; font-weight: bold; }
-        .acc-body { padding: 15px; display: none; background: #1e293b; border-bottom: 1px solid #334155; }
-        .active { display: block; }
+        .center-controls { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 200px; }
+        .reroll-info { font-size: 0.85rem; color: #38bdf8; font-weight: bold; }
         .deck-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 0.85rem; color: #cbd5e1; }
     </style>
 </head>
@@ -45,33 +52,59 @@
             <div id="pack-checkboxes" style="display:flex; flex-wrap:wrap; gap:15px;"></div>
             <br><br>
             <button class="btn btn-main" style="background:#475569;" onclick="openModal('modal-ban')">詳細設定 (カードBAN)</button>
-            <button class="btn btn-main" style="float:right; width:200px;" onclick="enterDraft()">入場する</button>
+            <button class="btn btn-main" style="float:right; width:200px;" onclick="enterTypeSelection()">入場する</button>
         </div>
     </div>
 
     <div id="modal-ban" class="modal"><div class="modal-content"><h2>カードBAN設定</h2><div id="accordion-container" style="max-height:400px; overflow-y:auto;"></div><br><button class="btn btn-main" style="width:100%" onclick="closeModal('modal-ban')">設定を閉じる</button></div></div>
     <div id="modal-detail" class="modal" onclick="closeModal('modal-detail')"><div class="modal-content" onclick="event.stopPropagation()"><h2 id="detail-name"></h2><p id="detail-cost"></p><p id="detail-desc"></p><button class="btn btn-main" style="width:100%" onclick="closeModal('modal-detail')">閉じる</button></div></div>
 
-    <div id="view-type-select" class="hidden"><h2 style="text-align:center;">タイプを選択</h2><div id="type-options" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding:20px;"></div></div>
+    <div id="view-type-select" class="hidden">
+        <h2 style="text-align:center;">タイプを選択（プレビュー中）</h2>
+        <div id="type-options" class="type-select-grid"></div>
+    </div>
 
     <div id="view-draft" class="hidden">
         <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #334155; padding-bottom: 15px;">
             <h2 id="current-type-label">タイプ: </h2>
-            <div id="draft-progress" style="font-size:1.5rem;">0 / 20 Pick</div>
+            <div id="draft-progress" style="font-size:1.5rem; font-weight:bold;">0 / 20 Pick</div>
         </div>
-        <div class="selection-area">
-            <div class="option-panel"><div class="card-group" id="display-A"></div><button class="btn btn-pick" onclick="handlePick('A')">選択</button></div>
-            <div class="center-controls"><button class="btn btn-reroll" onclick="nextPick(true)">カード再抽選</button><div class="reroll-desc">全レアリティから<br>再抽選されます</div></div>
-            <div class="option-panel"><div class="card-group" id="display-B"></div><button class="btn btn-pick" onclick="handlePick('B')">選択</button></div>
+        
+        <div id="draft-complete-msg" class="hidden" style="text-align:center; padding:40px; background:#06b6d4; border-radius:10px; margin-top:20px;">
+            <h2 style="margin:0;">デッキ構築完了！</h2>
+            <p>40枚のカードが選ばれました。</p>
         </div>
-        <div style="margin-top: 50px;"><h4>デッキリスト (<span id="deck-count">0</span> / 40)</h4><div id="deck-list-display" class="deck-grid"></div></div>
+
+        <div id="selection-controls">
+            <div class="selection-area">
+                <div class="option-panel"><div class="card-group" id="display-A"></div><button class="btn btn-pick" onclick="handlePick('A')">選択</button></div>
+                <div class="center-controls">
+                    <button id="reroll-button" class="btn btn-reroll" onclick="handleReroll()">カード再抽選</button>
+                    <div id="reroll-count-display" class="reroll-info">残り再抽選: 0回</div>
+                </div>
+                <div class="option-panel"><div class="card-group" id="display-B"></div><button class="btn btn-pick" onclick="handlePick('B')">選択</button></div>
+            </div>
+        </div>
+
+        <div style="margin-top: 50px;">
+            <h4 style="color:#94a3b8;">現在のデッキ (<span id="deck-count">0</span> / 40)</h4>
+            <div id="deck-list-display" class="deck-grid"></div>
+        </div>
     </div>
 </div>
 
 <script>
+    // --- 設定値 ---
+    const NEUTRAL_CHANCE = 0.20; // ニュートラルが選ばれる確率 (20%)
+    const REROLL_LIMITS = {
+        1: 2, 2: 3, 3: 2, 4: 5, 5: 2, 6: 2, 7: 3 // タイプIDごとの再抽選回数
+    };
+
     let masterCards = []; let activeCards = []; let myDeck = [];
     let selectedType = 0; let currentPickCount = 0; let currentOptions = { A: [], B: [] };
+    let remainingRerolls = 0;
 
+    // CSV読み込み
     window.addEventListener('DOMContentLoaded', () => {
         fetch('data/cards.csv')
             .then(res => res.text())
@@ -93,7 +126,7 @@
 
     function renderPackChecks() {
         const area = document.getElementById('pack-checkboxes');
-        for(let i=0; i<=7; i++) area.innerHTML += `<label style="background:#334155; padding:8px; border-radius:5px; margin-right:5px;"><input type="checkbox" class="pack-chk" value="${i}" checked> ${i===0?'ベーシック':i+'弾'}</label>`;
+        for(let i=0; i<=7; i++) area.innerHTML += `<label style="background:#334155; padding:8px; border-radius:5px; margin-right:5px; cursor:pointer;"><input type="checkbox" class="pack-chk" value="${i}" checked> ${i===0?'ベーシック':i+'弾'}</label>`;
     }
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
@@ -104,35 +137,102 @@
         container.innerHTML = '';
         for(let i=0; i<=7; i++) {
             const div = document.createElement('div');
-            div.innerHTML = `<div class="acc-header" onclick="this.nextElementSibling.classList.toggle('active')">${i===0?'ニュートラル':'タイプ '+i} ▼</div>
-                <div class="acc-body">${masterCards.filter(c=>c.type===i).map(c=>`<label style="display:block;"><input type="checkbox" onchange="masterCards.find(m=>m.id==='${c.id}').isBanned=!this.checked" checked> ${c.name}</label>`).join('')}</div>`;
+            const typeName = (i === 0) ? "ニュートラル" : "タイプ " + i;
+            div.innerHTML = `<div class="acc-header" onclick="this.nextElementSibling.classList.toggle('active')">${typeName} ▼</div>
+                <div class="acc-body">${masterCards.filter(c=>c.type===i).map(c=>`<label style="display:block; padding:3px 0;"><input type="checkbox" onchange="masterCards.find(m=>m.id==='${c.id}').isBanned=!this.checked" checked> ${c.name}</label>`).join('')}</div>`;
             container.appendChild(div);
         }
     }
 
-    function enterDraft() {
+    // タイプ選択画面へ（プレビュー付き）
+    function enterTypeSelection() {
         const selectedPacks = Array.from(document.querySelectorAll('.pack-chk:checked')).map(el => parseInt(el.value));
+        if(selectedPacks.length === 0) return alert("パックを選択してください");
+        
         activeCards = masterCards.filter(c => !c.isBanned && selectedPacks.includes(c.pack));
+        
         document.getElementById('view-setup').classList.add('hidden');
         document.getElementById('view-type-select').classList.remove('hidden');
+        
         const container = document.getElementById('type-options');
         container.innerHTML = '';
+        
         for(let i=1; i<=7; i++) {
-            const btn = document.createElement('button'); btn.className = 'btn btn-main'; btn.innerText = `タイプ ${i}`;
-            btn.style.height = '60px'; btn.onclick = () => startDraft(i);
-            container.appendChild(btn);
+            // 各タイプのレアリティ2以上（金・虹）からランダムに2枚抽出
+            const previews = activeCards.filter(c => c.type === i && c.rarity >= 2)
+                                       .sort(() => 0.5 - Math.random()).slice(0, 2);
+            
+            const row = document.createElement('div');
+            row.className = 'type-option-row';
+            row.innerHTML = `
+                <button class="btn btn-main" style="width:150px;" onclick="startDraft(${i})">タイプ ${i} を選択</button>
+                <div style="color:#94a3b8; font-size:0.9rem;">注目カード:</div>
+                <div class="type-preview-imgs">
+                    ${previews.map(p => `<img src="image/${p.image_id}.png" class="preview-img" title="${p.name}" onerror="this.src='https://via.placeholder.com/80x110?text=Card'">`).join('')}
+                </div>
+            `;
+            container.appendChild(row);
         }
     }
 
-    function startDraft(id) { selectedType = id; document.getElementById('view-type-select').classList.add('hidden'); document.getElementById('view-draft').classList.remove('hidden'); document.getElementById('current-type-label').innerText = `タイプ: ${id}`; nextPick(); }
+    function startDraft(id) {
+        selectedType = id;
+        remainingRerolls = REROLL_LIMITS[id] || 0;
+        document.getElementById('view-type-select').classList.add('hidden');
+        document.getElementById('view-draft').classList.remove('hidden');
+        document.getElementById('current-type-label').innerText = `タイプ: ${id}`;
+        updateRerollDisplay();
+        nextPick();
+    }
+
+    function handleReroll() {
+        if(remainingRerolls > 0) {
+            remainingRerolls--;
+            updateRerollDisplay();
+            nextPick(true); // trueを渡して全レアリティ抽選を指示
+        }
+    }
+
+    function updateRerollDisplay() {
+        const btn = document.getElementById('reroll-button');
+        const disp = document.getElementById('reroll-count-display');
+        disp.innerText = `残り再抽選: ${remainingRerolls}回`;
+        btn.disabled = (remainingRerolls <= 0);
+    }
 
     function nextPick(isReroll = false) {
-        if(currentPickCount >= 20 && !isReroll) return;
-        const rarities = isReroll ? [0,1,2,3] : (currentPickCount === 0 || currentPickCount === 19 ? [2,3] : [0,1,2,3]);
-        const pool = activeCards.filter(c => (c.type === selectedType || c.type === 0) && rarities.includes(c.rarity));
-        const shuffled = pool.sort(() => 0.5 - Math.random());
-        currentOptions.A = [shuffled[0], shuffled[1]]; currentOptions.B = [shuffled[2], shuffled[3]];
+        if(currentPickCount >= 20) {
+            document.getElementById('selection-controls').classList.add('hidden');
+            document.getElementById('draft-complete-msg').classList.remove('hidden');
+            return;
+        }
+
+        // レアリティ設定
+        let targetRarities = [0, 1, 2, 3]; // デフォルトは全レアリティ
+        if (!isReroll) {
+            if (currentPickCount === 0 || currentPickCount === 19) {
+                targetRarities = [2, 3]; // 最初と最後は金・虹確定
+            }
+        }
+
+        // 4枚のカードを1枚ずつ抽選（ニュートラル確率を考慮）
+        currentOptions.A = [drawOneCard(targetRarities), drawOneCard(targetRarities)];
+        currentOptions.B = [drawOneCard(targetRarities), drawOneCard(targetRarities)];
+        
         renderChoices();
+    }
+
+    // 確率に基づいた1枚抽選ロジック
+    function drawOneCard(rarities) {
+        const isNeutral = Math.random() < NEUTRAL_CHANCE;
+        const typePool = isNeutral ? 0 : selectedType;
+        
+        const pool = activeCards.filter(c => c.type === typePool && rarities.includes(c.rarity));
+        
+        // 万が一プールが空の場合は、必ず存在するカードを返す
+        if(pool.length === 0) return activeCards.filter(c => rarities.includes(c.rarity))[0];
+        
+        return pool[Math.floor(Math.random() * pool.length)];
     }
 
     function renderChoices() {
@@ -141,17 +241,29 @@
             const container = document.getElementById(`display-${L}`);
             container.innerHTML = '';
             currentOptions[L].forEach(c => {
-                // フォルダ名を「image」に変更
-                const imgPath = `image/${c.image_id}.png`;
                 container.innerHTML += `
                     <div class="card-item" onclick="showDetail('${c.id}')">
-                        <img src="${imgPath}" 
+                        <img src="image/${c.image_id}.png" 
                              class="card-img" 
                              alt="${c.name}" 
-                             onerror="if(this.src.indexOf('placeholder') === -1) this.src='https://via.placeholder.com/160x220?text=${encodeURIComponent(c.name)}'">
+                             onerror="this.onerror=null; this.src='https://via.placeholder.com/160x220?text=${encodeURIComponent(c.name)}'">
                     </div>`;
             });
         });
+    }
+
+    function handlePick(L) {
+        myDeck.push(...currentOptions[L]);
+        currentPickCount++;
+        updateDeckUI();
+        nextPick();
+    }
+
+    function updateDeckUI() {
+        document.getElementById('deck-count').innerText = myDeck.length;
+        const counts = {}; myDeck.forEach(c => counts[c.name] = (counts[c.name] || 0) + 1);
+        document.getElementById('deck-list-display').innerHTML = Object.entries(counts)
+            .map(([n, c]) => `<div style="background:#334155; padding:5px; border-radius:3px;">${n} ×${c}</div>`).join('');
     }
 
     function showDetail(id) {
@@ -160,13 +272,6 @@
         document.getElementById('detail-cost').innerText = `コスト: ${c.cost}`;
         document.getElementById('detail-desc').innerText = c.desc;
         openModal('modal-detail');
-    }
-
-    function handlePick(L) { myDeck.push(...currentOptions[L]); currentPickCount++; updateDeckUI(); nextPick(); }
-    function updateDeckUI() {
-        document.getElementById('deck-count').innerText = myDeck.length;
-        const counts = {}; myDeck.forEach(c => counts[c.name] = (counts[c.name] || 0) + 1);
-        document.getElementById('deck-list-display').innerHTML = Object.entries(counts).map(([n, c]) => `<div style="background:#334155; padding:5px; border-radius:3px;">${n} ×${c}</div>`).join('');
     }
 </script>
 </body>
