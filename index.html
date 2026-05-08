@@ -16,7 +16,7 @@
         .btn-reroll:disabled { opacity: 0.3; cursor: not-allowed; }
 
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
-        .modal-content { background: #1e293b; padding: 40px; width: 600px; border-radius: 15px; border: 1px solid #334155; position: relative; }
+        .modal-content { background: #1e293b; padding: 40px; width: 600px; border-radius: 15px; border: 1px solid #334155; position: relative; line-height: 1.6; }
 
         .selection-area { display: flex; align-items: center; justify-content: center; gap: 30px; margin-top: 30px; }
         .option-panel { background: var(--card-panel); border: 2px solid #334155; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; min-width: 360px; }
@@ -25,19 +25,16 @@
         .card-item:hover { transform: scale(1.05); }
         .card-img { width: 100%; height: auto; border-radius: 6px; border: 2px solid #475569; }
 
-        /* タイプ選択 */
         .type-select-grid { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 10px; }
         .type-option-row { display: flex; align-items: center; background: rgba(51, 65, 85, 0.4); padding: 10px 20px; border-radius: 10px; gap: 20px; border: 1px solid #334155; }
         .preview-img { width: 70px; border-radius: 4px; border: 1px solid #38bdf8; }
 
-        /* 履歴表示 */
         .history-container { margin-top: 40px; border-top: 2px solid #334155; padding-top: 20px; }
         .history-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; margin-top: 10px; }
         .history-item { width: 100%; position: relative; }
         .history-img { width: 100%; height: auto; border-radius: 4px; border: 1px solid #1e293b; }
         
-        /* 重複枚数バッジ */
-        .count-badge { position: absolute; top: -5px; right: -5px; background: rgba(0,0,0,0.8); color: white; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid #475569; pointer-events: none; }
+        .count-badge { position: absolute; top: -5px; right: -5px; background: rgba(0,0,0,0.85); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid #38bdf8; pointer-events: none; }
 
         .center-controls { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 180px; }
         .reroll-info { font-size: 0.8rem; color: #38bdf8; }
@@ -62,7 +59,16 @@
     </div>
 
     <div id="modal-ban" class="modal"><div class="modal-content"><h2>BAN設定</h2><div id="accordion-container" style="max-height:400px; overflow-y:auto;"></div><br><button class="btn btn-main" style="width:100%" onclick="closeModal('modal-ban')">閉じる</button></div></div>
-    <div id="modal-detail" class="modal" onclick="closeModal('modal-detail')"><div class="modal-content" onclick="event.stopPropagation()"><h2 id="detail-name"></h2><p id="detail-cost"></p><p id="detail-desc"></p><button class="btn btn-main" style="width:100%" onclick="closeModal('modal-detail')">閉じる</button></div></div>
+    
+    <div id="modal-detail" class="modal" onclick="closeModal('modal-detail')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2 id="detail-name" style="color:#38bdf8; margin-top:0;"></h2>
+            <div id="detail-cost" style="font-weight:bold; margin-bottom:10px;"></div>
+            <div id="detail-desc" style="white-space: pre-wrap; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px;"></div>
+            <br>
+            <button class="btn btn-main" style="width:100%" onclick="closeModal('modal-detail')">閉じる</button>
+        </div>
+    </div>
 
     <div id="view-type-select" class="hidden">
         <h2 style="text-align:center;">クラスを選択してください</h2>
@@ -75,8 +81,9 @@
             <div id="draft-progress" style="font-size:1.5rem; font-weight:bold;">1 / 20 Pick</div>
         </div>
 
-        <div id="draft-complete-msg" class="hidden" style="text-align:center; padding:30px; background:#1e3a8a; border-radius:10px; margin-top:20px;">
-            <h2>Deck Complete! (40/40)</h2>
+        <div id="draft-complete-msg" class="hidden" style="text-align:center; padding:30px; background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border-radius:10px; margin-top:20px; border: 1px solid #3b82f6;">
+            <h2 style="margin:0;">Deck Complete!</h2>
+            <p style="margin: 5px 0 0 0;">40枚すべてのカードが選ばれました。</p>
         </div>
 
         <div id="selection-controls">
@@ -114,7 +121,7 @@
             for (let i = 1; i < lines.length; i++) {
                 const d = lines[i].split(',').map(item => item.trim());
                 if (d.length < 6) continue;
-                masterCards.push({ id: d[0], name: d[1], pack: parseInt(d[2]), type: parseInt(d[3]), rarity: parseInt(d[4]), image_id: d[5], cost: parseInt(d[6]), desc: d[7], isBanned: false });
+                masterCards.push({ id: d[0], name: d[1], pack: parseInt(d[2]), type: parseInt(d[3]), rarity: parseInt(d[4]), image_id: d[5], cost: parseInt(d[6]), desc: d[7].replace(/\\n/g, '\n'), isBanned: false });
             }
             document.getElementById('loading-status').innerText = "Load OK";
             renderPackChecks();
@@ -124,7 +131,7 @@
 
     function renderPackChecks() {
         const area = document.getElementById('pack-checkboxes');
-        for(let i=0; i<=7; i++) area.innerHTML += `<label style="background:#334155; padding:8px; border-radius:5px; cursor:pointer;"><input type="checkbox" class="pack-chk" value="${i}" checked> ${i===0?'Basic':i+'弾'}</label>`;
+        for(let i=0; i<=7; i++) area.innerHTML += `<label style="background:#334155; padding:8px; border-radius:5px; cursor:pointer; margin-right:5px;"><input type="checkbox" class="pack-chk" value="${i}" checked> ${i===0?'Basic':i+'弾'}</label>`;
     }
 
     function renderBanSettings() {
@@ -176,12 +183,10 @@
     }
 
     function nextPick(isReroll = false) {
-        if(currentPickCount >= 20) {
-            document.getElementById('selection-controls').classList.add('hidden');
-            document.getElementById('draft-complete-msg').classList.remove('hidden');
-            return;
-        }
+        // 20回目のPickが完了していたら、入力を受け付けない
+        if(currentPickCount > 20) return;
 
+        let targetRarities = [0, 1, 2, 3];
         if (!isReroll) {
             if (currentPickCount === 1 || currentPickCount === 3 || currentPickCount === 5 || currentPickCount === 7 || currentPickCount === 9 || currentPickCount === 11 || currentPickCount === 13 || currentPickCount === 15 || currentPickCount === 17) {
                 targetRarities = [0];
@@ -194,7 +199,6 @@
             }
         }
 
-        // 重複なしで4枚選出する
         const drawn = [];
         while(drawn.length < 4) {
             const card = drawOne(targetRarities);
@@ -206,7 +210,6 @@
         currentOptions.A = [drawn[0], drawn[1]];
         currentOptions.B = [drawn[2], drawn[3]];
         renderChoices();
-        updateUI();
     }
 
     function drawOne(rarities) {
@@ -228,18 +231,27 @@
     function handlePick(L) {
         myDeck.push(...currentOptions[L]);
         currentPickCount++;
-        nextPick();
+        
+        updateUI(); // 先に枚数と履歴を更新
+
+        if(currentPickCount > 20) {
+            // 20回目のPickが終了した瞬間にUIを切り替える
+            document.getElementById('selection-controls').classList.add('hidden');
+            document.getElementById('draft-complete-msg').classList.remove('hidden');
+        } else {
+            nextPick();
+        }
     }
 
     function updateUI() {
         document.getElementById('deck-count').innerText = myDeck.length;
-        document.getElementById('draft-progress').innerText = `${currentPickCount} / 20 Pick`;
+        // 画面上部の表示は最大20まで
+        const displayCount = Math.min(currentPickCount, 20);
+        document.getElementById('draft-progress').innerText = `${displayCount} / 20 Pick`;
         document.getElementById('reroll-count-display').innerText = `残り再抽選: ${remainingRerolls}回`;
         document.getElementById('reroll-button').disabled = (remainingRerolls <= 0);
 
         const history = document.getElementById('history-display');
-        
-        // デッキを「コスト順 -> ID順」にソートし、重複をカウントする
         const grouped = [];
         const sortedDeck = [...myDeck].sort((a, b) => (a.cost - b.cost) || (a.id.localeCompare(b.id)));
         
@@ -264,6 +276,7 @@
         if(!c) return;
         document.getElementById('detail-name').innerText = c.name;
         document.getElementById('detail-cost').innerText = `コスト: ${c.cost}`;
+        // 改行を反映させるためinnerTextを使用
         document.getElementById('detail-desc').innerText = c.desc;
         openModal('modal-detail');
     }
