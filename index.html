@@ -21,10 +21,9 @@
         #detail-desc { 
             background: rgba(0,0,0,0.4); padding: 20px; border-radius: 8px; margin-top: 15px;
             font-size: 0.95rem; color: #e2e8f0; line-height: 1.8; white-space: pre-wrap; 
-            max-height: 300px; overflow-y: auto; border: 1px solid #334155;
+            max-height: 300px; overflow-y: auto; border: 1px solid #334155; text-align: left;
         }
 
-        /* BAN設定用 */
         .acc-header { background: #334155; padding: 12px; cursor: pointer; border-bottom: 1px solid #1e293b; font-weight: bold; display: flex; justify-content: space-between; }
         .acc-body { padding: 15px; display: none; background: #1e293b; border: 1px solid #334155; }
         .pack-group { margin-bottom: 15px; border-bottom: 1px dashed #475569; padding-bottom: 10px; }
@@ -46,7 +45,7 @@
         .history-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; margin-top: 10px; }
         .history-item { width: 100%; position: relative; }
         .history-img { width: 100%; border-radius: 4px; border: 1px solid #1e293b; }
-        .count-badge { position: absolute; top: -5px; right: -5px; background: rgba(0,0,0,0.9); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 11px; border: 1px solid #38bdf8; }
+        .count-badge { position: absolute; top: -5px; right: -5px; background: rgba(0,0,0,0.9); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 11px; border: 1px solid #38bdf8; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -64,17 +63,15 @@
         </div>
     </div>
 
-    <!-- BAN設定モーダル -->
     <div id="modal-ban" class="modal">
         <div class="modal-content">
             <h2>詳細BAN設定</h2>
             <div id="accordion-container" style="max-height:450px; overflow-y:auto; border:1px solid #334155;"></div>
             <br>
-            <button class="btn btn-main" style="width:100%" onclick="closeModal('modal-ban')">設定を完了して閉じる</button>
+            <button class="btn btn-main" style="width:100%" onclick="closeModal('modal-ban')">完了</button>
         </div>
     </div>
     
-    <!-- カード詳細モーダル -->
     <div id="modal-detail" class="modal" onclick="closeModal('modal-detail')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h2 id="detail-name" style="color:#38bdf8; margin: 0;"></h2>
@@ -122,7 +119,6 @@
     let remainingRerolls = 0; let typePreviewCards = {};
     let maxPack = 0;
 
-    // CSV読み込み
     function parseComplexCSV(text) {
         const result = []; let row = []; let field = ""; let inQuotes = false;
         for (let i = 0; i < text.length; i++) {
@@ -150,7 +146,7 @@
             for (let i = 1; i < data.length; i++) {
                 const d = data[i]; if (d.length < 8) continue;
                 const p = parseInt(d[2]);
-                if (p > maxPack) maxPack = p; // 最大パック数を更新
+                if (p > maxPack) maxPack = p;
                 masterCards.push({ 
                     id: d[0], name: d[1], pack: p, type: parseInt(d[3]), 
                     rarity: parseInt(d[4]), image_id: d[5], cost: parseInt(d[6]), 
@@ -162,7 +158,6 @@
         });
     });
 
-    // パックチェックボックス生成
     function renderPackChecks() {
         const area = document.getElementById('pack-checkboxes');
         area.innerHTML = '';
@@ -173,18 +168,11 @@
         }
     }
 
-    // パックのチェック変更時にカードのBAN状態を同期
     function syncBanWithPack(packNum, isChecked) {
-        masterCards.forEach(c => {
-            if (c.pack === packNum) c.isBanned = !isChecked;
-        });
+        masterCards.forEach(c => { if (c.pack === packNum) c.isBanned = !isChecked; });
     }
 
-    // BAN設定画面を開く
-    function openBanSettings() {
-        renderBanAccordion();
-        openModal('modal-ban');
-    }
+    function openBanSettings() { renderBanAccordion(); openModal('modal-ban'); }
 
     function renderBanAccordion() {
         const container = document.getElementById('accordion-container');
@@ -192,52 +180,31 @@
         [0,1,2,3,4,5,6,7].forEach(typeIdx => {
             const classCards = masterCards.filter(c => c.type === typeIdx);
             if (classCards.length === 0) return;
-
             const div = document.createElement('div');
-            let innerHTML = `<div class="acc-header" onclick="this.nextElementSibling.classList.toggle('active')">
-                <span>${CLASS_NAMES[typeIdx]}</span><span>▼</span></div><div class="acc-body">`;
-            
+            let html = `<div class="acc-header" onclick="this.nextElementSibling.classList.toggle('active')"><span>${CLASS_NAMES[typeIdx]}</span><span>▼</span></div><div class="acc-body">`;
             for (let p = 0; p <= maxPack; p++) {
                 const packCards = classCards.filter(c => c.pack === p);
                 if (packCards.length === 0) continue;
-                
-                const allChecked = packCards.every(c => !c.isBanned);
-                innerHTML += `<div class="pack-group">
-                    <div class="pack-title">
-                        <strong>${p===0?'Basic':p+'弾'}</strong>
-                        <button class="btn" style="padding:2px 8px; font-size:0.7rem; background:#475569;" 
-                            onclick="togglePackInBan(${typeIdx}, ${p}, this)">一括切替</button>
-                    </div>
-                    <div class="card-list">
-                        ${packCards.map(c => `
-                            <label class="card-label">
-                                <input type="checkbox" class="card-ban-chk" data-id="${c.id}" ${!c.isBanned?'checked':''} 
-                                    onchange="masterCards.find(m=>m.id==='${c.id}').isBanned = !this.checked">
-                                ${c.name}
-                            </label>
-                        `).join('')}
-                    </div>
-                </div>`;
+                html += `<div class="pack-group"><div class="pack-title"><strong>${p===0?'Basic':p+'弾'}</strong>
+                    <button class="btn" style="padding:2px 8px; font-size:0.7rem; background:#475569;" onclick="togglePackInBan(${typeIdx}, ${p}, this)">一括切替</button></div><div class="card-list">
+                    ${packCards.map(c => `<label class="card-label"><input type="checkbox" ${!c.isBanned?'checked':''} onchange="masterCards.find(m=>m.id==='${c.id}').isBanned = !this.checked">${c.name}</label>`).join('')}</div></div>`;
             }
-            div.innerHTML = innerHTML + `</div>`;
+            div.innerHTML = html + `</div>`;
             container.appendChild(div);
         });
     }
 
-    // BAN設定内の一括切替ボタン
-    function togglePackInBan(typeIdx, packNum, btn) {
+    function togglePackInBan(typeIdx, packNum) {
         const packCards = masterCards.filter(c => c.type === typeIdx && c.pack === packNum);
-        const currentState = packCards[0].isBanned;
-        packCards.forEach(c => c.isBanned = !currentState);
-        renderBanAccordion(); // 再描画
+        const nextState = !packCards[0].isBanned;
+        packCards.forEach(c => c.isBanned = nextState);
+        renderBanAccordion();
     }
 
     function enterTypeSelection() {
         const activePacks = Array.from(document.querySelectorAll('.pack-main-chk:checked')).map(el => parseInt(el.dataset.pack));
         activeCards = masterCards.filter(c => !c.isBanned && activePacks.includes(c.pack));
-        
-        if (activeCards.length < 10) { alert("有効なカードが少なすぎます。パック選択やBAN設定を見直してください。"); return; }
-        
+        if (activeCards.length < 10) { alert("カードが少なすぎます"); return; }
         document.getElementById('view-setup').classList.add('hidden');
         document.getElementById('view-type-select').classList.remove('hidden');
         const container = document.getElementById('type-options');
@@ -246,10 +213,8 @@
             const pool = activeCards.filter(c => c.type === i && c.rarity >= 2);
             if (pool.length === 0) continue;
             typePreviewCards[i] = pool.sort(() => 0.5 - Math.random()).slice(0, 2);
-            container.innerHTML += `<div class="type-option-row">
-                <button class="btn btn-main" style="width:180px;" onclick="startDraft(${i})">${CLASS_NAMES[i]}</button>
-                <div>${typePreviewCards[i].map(p => `<img src="image/${p.image_id}.png" class="preview-img">`).join('')}</div>
-            </div>`;
+            container.innerHTML += `<div class="type-option-row"><button class="btn btn-main" style="width:180px;" onclick="startDraft(${i})">${CLASS_NAMES[i]}</button>
+                <div>${typePreviewCards[i].map(p => `<img src="image/${p.image_id}.png" class="preview-img" onerror="this.style.display='none'">`).join('')}</div></div>`;
         }
     }
 
@@ -266,39 +231,51 @@
 
     function nextPick(isReroll = false) {
         if(myDeck.length >= 40 && !isReroll) return;
-        if (!isReroll) {
-            if (myDeck.length === 2 || myDeck.length === 6 || myDeck.length === 10 || myDeck.length === 14 || myDeck.length === 18 || myDeck.length === 22 || myDeck.length === 26 || myDeck.length === 30 || myDeck.length === 34) {
-            targetRarities = [0];
-            }
-            if (myDeck.length === 4 || myDeck.length === 8 || myDeck.length === 16 || myDeck.length === 20 || myDeck.length === 24 || myDeck.length === 32 || myDeck.length === 36) {
-            targetRarities = [1];
-            }
-            if (myDeck.length === 12 || myDeck.length === 28 || myDeck.length === 38) {
-            targetRarities = [2,3];
-            }
-        }
-        const drawn = [];
-        while(drawn.length < 4) {
-            const card = drawOne(targetRarities);
-            if(!drawn.some(d => d.id === card.id)) drawn.push(card);
-        }
-        currentOptions.A = [drawn[0], drawn[1]]; currentOptions.B = [drawn[2], drawn[3]];
-        renderChoices();
-    }
 
-    function drawOne(rarities) {
-        const counts = {}; myDeck.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
-        const pool = activeCards.filter(c => {
+        // 【1】レアリティ条件の設定
+        let allowedRarities = [0, 1, 2, 3];
+        if (!isReroll) {
+            const pickCount = Math.floor(myDeck.length / 2);
+            if (pickCount === 1 || pickCount === 3 || pickCount === 5 || pickCount === 7 || pickCount === 9 || pickCount === 11 || pickCount === 13 || pickCount === 15 || pickCount === 17) allowedRarities = [0];
+            if (pickCount === 2 || pickCount === 4 || pickCount === 8 || pickCount === 10 || pickCount === 12 || pickCount === 16 || pickCount === 18) allowedRarities = [1];
+            if (pickCount === 6 || pickCount === 14|| pickCount === 19) allowedRarities = [2, 3];
+            // 必要に応じてここに条件追加が可能
+        }
+
+        // 【2】4枚一括抽選（提示カード内での重複と、デッキ3枚制限を同時に解決）
+        const counts = {}; 
+        myDeck.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
+
+        // 全候補を抽出（3枚制限をクリアしているものだけ）
+        const basePool = activeCards.filter(c => {
             const isType = (Math.random() < 0.2 ? c.type === 0 : c.type === selectedType);
-            return isType && rarities.includes(c.rarity) && (counts[c.id] || 0) < 3;
+            return isType && allowedRarities.includes(c.rarity) && (counts[c.id] || 0) < 3;
         });
-        return pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : activeCards[0];
+
+        const drawn = [];
+        const poolCopy = [...basePool];
+        
+        while(drawn.length < 4 && poolCopy.length > 0) {
+            const idx = Math.floor(Math.random() * poolCopy.length);
+            drawn.push(poolCopy[idx]);
+            poolCopy.splice(idx, 1); // 提示される4枚の中での重複を防ぐ
+        }
+
+        // 候補不足時のセーフティ
+        if (drawn.length < 4) {
+            alert("抽選可能なカードが不足しています。BAN設定を緩めてください。");
+            return;
+        }
+
+        currentOptions.A = [drawn[0], drawn[1]];
+        currentOptions.B = [drawn[2], drawn[3]];
+        renderChoices();
     }
 
     function renderChoices() {
         ['A', 'B'].forEach(L => {
             document.getElementById(`display-${L}`).innerHTML = currentOptions[L].map(c => `
-                <div class="card-item" onclick="showDetail('${c.id}')"><img src="image/${c.image_id}.png" class="card-img"></div>`).join('');
+                <div class="card-item" onclick="showDetail('${c.id}')"><img src="image/${c.image_id}.png" class="card-img" onerror="this.src='https://via.placeholder.com/150x200?text=${encodeURIComponent(c.name)}'"></div>`).join('');
         });
     }
 
@@ -322,12 +299,13 @@
         });
         document.getElementById('history-display').innerHTML = grouped.map(g => `
             <div class="history-item" onclick="showDetail('${g.id}')">
-                <img src="image/${g.image_id}.png" class="history-img"><div class="count-badge">×${g.count}</div>
+                <img src="image/${g.image_id}.png" class="history-img" onerror="this.src='https://via.placeholder.com/70x95?text=Card'"><div class="count-badge">×${g.count}</div>
             </div>`).join('');
     }
 
     function showDetail(id) {
         const c = masterCards.find(m => m.id === id);
+        if(!c) return;
         document.getElementById('detail-name').innerText = c.name;
         document.getElementById('detail-cost').innerText = `コスト: ${c.cost}`;
         document.getElementById('detail-desc').innerText = c.desc;
