@@ -209,8 +209,16 @@
         if(myDeck.length >= 40 && !isReroll) return;
 
         let targetRarities = [0, 1, 2, 3];
-        if (!isReroll && myDeck.length === 38) {
-            targetRarities = [2, 3]; // 最後は金・虹確定
+        if (!isReroll) {
+            if (myDeck.length === 2 || myDeck.length === 6 || myDeck.length === 10 || myDeck.length === 14 || myDeck.length === 18 || myDeck.length === 22 || myDeck.length === 26 || myDeck.length === 30 || myDeck.length === 34) {
+            targetRarities = [0];
+            }
+            if (myDeck.length === 4 || myDeck.length === 8 || myDeck.length === 16 || myDeck.length === 20 || myDeck.length === 24 || myDeck.length === 32 || myDeck.length === 36) {
+            targetRarities = [1];
+            }
+            if (myDeck.length === 12 || myDeck.length === 28 || myDeck.length === 38) {
+            targetRarities = [2,3];
+            }
         }
 
         const drawn = [];
