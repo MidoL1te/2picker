@@ -15,11 +15,9 @@
         .btn-reroll { background: linear-gradient(180deg, #1e293b 0%, #334155 100%); color: #38bdf8; border: 1px solid #38bdf8; padding: 10px 20px; font-size: 0.9rem; }
         .btn-reroll:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        /* モーダル関連 */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
         .modal-content { background: #1e293b; padding: 30px; width: 550px; border-radius: 15px; border: 1px solid #334155; position: relative; line-height: 1.6; }
 
-        /* カード説明文エリア */
         #detail-desc { 
             background: rgba(0,0,0,0.4); 
             padding: 20px; 
@@ -27,12 +25,13 @@
             margin-top: 15px;
             font-size: 0.95rem;
             color: #e2e8f0;
-            line-height: 1.8;      /* 行間を広げて読みやすく */
-            white-space: normal;   /* innerHTML + <br> を使うのでnormalでOK */
+            line-height: 1.8;
+            white-space: pre-wrap; /* 改行を反映 */
             word-wrap: break-word;
             max-height: 350px;
             overflow-y: auto;
             border: 1px solid #334155;
+            text-align: left;
         }
 
         .selection-area { display: flex; align-items: center; justify-content: center; gap: 30px; margin-top: 30px; }
@@ -50,7 +49,6 @@
         .history-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; margin-top: 10px; }
         .history-item { width: 100%; position: relative; }
         .history-img { width: 100%; height: auto; border-radius: 4px; border: 1px solid #1e293b; }
-        
         .count-badge { position: absolute; top: -5px; right: -5px; background: rgba(0,0,0,0.9); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid #38bdf8; pointer-events: none; z-index: 10; }
 
         .center-controls { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 180px; }
@@ -63,7 +61,6 @@
 <body>
 
 <div class="app-container">
-    <!-- セットアップ -->
     <div id="view-setup">
         <h1 style="text-align:center; color:#38bdf8;">2Pick Simulator</h1>
         <p id="loading-status" style="text-align:center;">Loading CSV...</p>
@@ -76,38 +73,32 @@
         </div>
     </div>
 
-    <!-- BAN設定モーダル -->
     <div id="modal-ban" class="modal"><div class="modal-content"><h2>BAN設定</h2><div id="accordion-container" style="max-height:400px; overflow-y:auto;"></div><br><button class="btn btn-main" style="width:100%" onclick="closeModal('modal-ban')">閉じる</button></div></div>
     
-    <!-- カード詳細モーダル -->
     <div id="modal-detail" class="modal" onclick="closeModal('modal-detail')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h2 id="detail-name" style="color:#38bdf8; margin: 0 0 5px 0;"></h2>
             <div id="detail-cost" style="font-weight:bold; color: #94a3b8;"></div>
-            <div id="detail-desc"></div> <!-- JSで <br> 置換して挿入 -->
+            <div id="detail-desc"></div> 
             <br>
             <button class="btn btn-main" style="width:100%" onclick="closeModal('modal-detail')">閉じる</button>
         </div>
     </div>
 
-    <!-- クラス選択 -->
     <div id="view-type-select" class="hidden">
         <h2 style="text-align:center;">クラスを選択してください</h2>
         <div id="type-options" class="type-select-grid"></div>
     </div>
 
-    <!-- ドラフトメイン -->
     <div id="view-draft" class="hidden">
         <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #334155; padding-bottom: 10px;">
             <h2 id="current-type-label" style="margin:0; color:#38bdf8;"></h2>
             <div id="draft-progress" style="font-size:1.5rem; font-weight:bold;">1 / 20 Pick</div>
         </div>
-
         <div id="draft-complete-msg" class="hidden" style="text-align:center; padding:30px; background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border-radius:10px; margin-top:20px; border: 1px solid #3b82f6;">
             <h2 style="margin:0;">Deck Complete!</h2>
             <p style="margin: 5px 0 0 0;">40枚すべてのカードが選ばれました。</p>
         </div>
-
         <div id="selection-controls">
             <div class="selection-area">
                 <div class="option-panel"><div class="card-group" id="display-A"></div><button class="btn btn-pick" onclick="handlePick('A')">左を選択</button></div>
@@ -118,7 +109,6 @@
                 <div class="option-panel"><div class="card-group" id="display-B"></div><button class="btn btn-pick" onclick="handlePick('B')">右を選択</button></div>
             </div>
         </div>
-
         <div class="history-container">
             <h4 style="margin:0; color:#94a3b8;">Pick履歴 (<span id="deck-count">0</span> / 40)</h4>
             <div id="history-display" class="history-grid"></div>
@@ -137,20 +127,65 @@
     let remainingRerolls = 0;
     let typePreviewCards = {};
 
+    // 【最重要】クォーテーション内の改行を保護しながらCSVを読み込む関数
+    function parseComplexCSV(text) {
+        const result = [];
+        let row = [];
+        let field = "";
+        let inQuotes = false;
+
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const nextChar = text[i + 1];
+
+            if (inQuotes) {
+                if (char === '"' && nextChar === '"') { // エスケープされたダブルクォート
+                    field += '"';
+                    i++;
+                } else if (char === '"') { // クォート終了
+                    inQuotes = false;
+                } else {
+                    field += char; // クォート内の文字（改行含む）をそのまま保持
+                }
+            } else {
+                if (char === '"') {
+                    inQuotes = true;
+                } else if (char === ',') {
+                    row.push(field);
+                    field = "";
+                } else if (char === '\r' || char === '\n') {
+                    if (field !== "" || row.length > 0) {
+                        row.push(field);
+                        result.push(row);
+                        row = [];
+                        field = "";
+                    }
+                    if (char === '\r' && nextChar === '\n') i++; // CRLF対応
+                } else {
+                    field += char;
+                }
+            }
+        }
+        if (row.length > 0) {
+            row.push(field);
+            result.push(row);
+        }
+        return result;
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
         fetch('data/cards.csv').then(res => res.text()).then(text => {
-            const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
-            for (let i = 1; i < lines.length; i++) {
-                const d = lines[i].split(',').map(item => item.trim());
+            const data = parseComplexCSV(text);
+            // ヘッダーを除いてループ
+            for (let i = 1; i < data.length; i++) {
+                const d = data[i];
                 if (d.length < 8) continue;
-
-                // 文字列内の \\n を 実際の改行 \n に一度変換
-                let rawDesc = d[7].replace(/\\n/g, '\n').replace(/"/g, '');
 
                 masterCards.push({ 
                     id: d[0], name: d[1], pack: parseInt(d[2]), type: parseInt(d[3]), 
                     rarity: parseInt(d[4]), image_id: d[5], cost: parseInt(d[6]), 
-                    desc: rawDesc, isBanned: false 
+                    desc: d[7], // ここに本物の改行が入った状態
+                    isBanned: false 
                 });
             }
             document.getElementById('loading-status').innerText = "Load OK";
@@ -214,7 +249,6 @@
 
     function nextPick(isReroll = false) {
         if(myDeck.length >= 40 && !isReroll) return;
-
         let targetRarities = [0, 1, 2, 3];
         if (!isReroll) {
             if (myDeck.length === 2 || myDeck.length === 6 || myDeck.length === 10 || myDeck.length === 14 || myDeck.length === 18 || myDeck.length === 22 || myDeck.length === 26 || myDeck.length === 30 || myDeck.length === 34) {
@@ -231,11 +265,8 @@
         const drawn = [];
         while(drawn.length < 4) {
             const card = drawOne(targetRarities);
-            if(!drawn.some(d => d.id === card.id)) {
-                drawn.push(card);
-            }
+            if(!drawn.some(d => d.id === card.id)) drawn.push(card);
         }
-
         currentOptions.A = [drawn[0], drawn[1]];
         currentOptions.B = [drawn[2], drawn[3]];
         renderChoices();
@@ -244,14 +275,12 @@
     function drawOne(rarities) {
         const currentCounts = {};
         myDeck.forEach(c => currentCounts[c.id] = (currentCounts[c.id] || 0) + 1);
-
         const pool = activeCards.filter(c => {
             const isTypeMatch = (Math.random() < NEUTRAL_CHANCE ? c.type === 0 : c.type === selectedType);
             const isRarityMatch = rarities.includes(c.rarity);
             const isUnderLimit = (currentCounts[c.id] || 0) < 3;
             return isTypeMatch && isRarityMatch && isUnderLimit;
         });
-
         const finalPool = pool.length > 0 ? pool : activeCards.filter(c => rarities.includes(c.rarity));
         return finalPool[Math.floor(Math.random() * finalPool.length)];
     }
@@ -269,7 +298,6 @@
     function handlePick(L) {
         myDeck.push(...currentOptions[L]);
         updateUI();
-
         if(myDeck.length >= 40) {
             document.getElementById('selection-controls').classList.add('hidden');
             document.getElementById('draft-complete-msg').classList.remove('hidden');
@@ -288,12 +316,10 @@
         const history = document.getElementById('history-display');
         const grouped = [];
         const sortedDeck = [...myDeck].sort((a, b) => (a.cost - b.cost) || (a.id.localeCompare(b.id)));
-        
         sortedDeck.forEach(card => {
             const existing = grouped.find(g => g.id === card.id);
             if (existing) { existing.count++; } else { grouped.push({ ...card, count: 1 }); }
         });
-
         history.innerHTML = grouped.map(g => `
             <div class="history-item" onclick="showDetail('${g.id}')">
                 <img src="image/${g.image_id}.png" class="history-img" title="${g.name}">
@@ -304,15 +330,9 @@
     function showDetail(id) {
         const c = masterCards.find(m => m.id === id);
         if(!c) return;
-
         document.getElementById('detail-name').innerText = c.name;
         document.getElementById('detail-cost').innerText = `コスト: ${c.cost}`;
-        
-        // ★修正の要: \n を HTMLの <br> に変換して innerHTML で流し込む
-        // これによりCSSの設定に依存せず確実に改行されます。
-        const formattedDesc = c.desc.split('\n').join('<br>');
-        document.getElementById('detail-desc').innerHTML = formattedDesc;
-        
+        document.getElementById('detail-desc').innerText = c.desc;
         openModal('modal-detail');
     }
 
