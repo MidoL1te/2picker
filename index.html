@@ -15,8 +15,23 @@
         .btn-reroll { background: linear-gradient(180deg, #1e293b 0%, #334155 100%); color: #38bdf8; border: 1px solid #38bdf8; padding: 10px 20px; font-size: 0.9rem; }
         .btn-reroll:disabled { opacity: 0.3; cursor: not-allowed; }
 
+        /* モーダル関連 */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
         .modal-content { background: #1e293b; padding: 40px; width: 600px; border-radius: 15px; border: 1px solid #334155; position: relative; line-height: 1.6; }
+
+        /* 【重要】カード説明文の改行設定 */
+        #detail-desc { 
+            white-space: pre-wrap;      /* 改行コードを維持して表示 */
+            word-wrap: break-word;     /* 長い単語を自動で折り返す */
+            background: rgba(0,0,0,0.3); 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-top: 10px;
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            max-height: 300px;         /* 長すぎる場合にスクロールさせる */
+            overflow-y: auto;
+        }
 
         .selection-area { display: flex; align-items: center; justify-content: center; gap: 30px; margin-top: 30px; }
         .option-panel { background: var(--card-panel); border: 2px solid #334155; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; min-width: 360px; }
@@ -64,7 +79,7 @@
         <div class="modal-content" onclick="event.stopPropagation()">
             <h2 id="detail-name" style="color:#38bdf8; margin-top:0;"></h2>
             <div id="detail-cost" style="font-weight:bold; margin-bottom:10px;"></div>
-            <div id="detail-desc" style="white-space: pre-wrap; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px;"></div>
+            <div id="detail-desc"></div> <!-- CSSで改行制御 -->
             <br>
             <button class="btn btn-main" style="width:100%" onclick="closeModal('modal-detail')">閉じる</button>
         </div>
@@ -121,10 +136,14 @@
             for (let i = 1; i < lines.length; i++) {
                 const d = lines[i].split(',').map(item => item.trim());
                 if (d.length < 6) continue;
+                // CSV内の文字列としての \n を 本物の改行コードに変換
+                const rawDesc = d[7] || "";
+                const cleanDesc = rawDesc.replace(/\\n/g, '\n').replace(/"/g, '');
+
                 masterCards.push({ 
                     id: d[0], name: d[1], pack: parseInt(d[2]), type: parseInt(d[3]), 
                     rarity: parseInt(d[4]), image_id: d[5], cost: parseInt(d[6]), 
-                    desc: d[7].replace(/\\n/g, '\n'), isBanned: false 
+                    desc: cleanDesc, isBanned: false 
                 });
             }
             document.getElementById('loading-status').innerText = "Load OK";
@@ -187,27 +206,16 @@
     }
 
     function nextPick(isReroll = false) {
-        // デッキが40枚なら抽選しない
         if(myDeck.length >= 40 && !isReroll) return;
 
-        // 次の2枚を追加した時に40枚目になるなら、金・虹確定にする
         let targetRarities = [0, 1, 2, 3];
-        if (!isReroll) {
-            if (myDeck.length === 2 || myDeck.length === 6 || myDeck.length === 10 || myDeck.length === 14 || myDeck.length === 18 || myDeck.length === 22 || myDeck.length === 26 || myDeck.length === 30 || myDeck.length === 34) {
-                targetRarities = [0];
-            }
-            if (myDeck.length === 4 || myDeck.length === 8 || myDeck.length === 16 || myDeck.length === 20 || myDeck.length === 24 || myDeck.length === 32 || myDeck.length === 36) {
-                targetRarities = [1];
-            }
-            if (myDeck.length === 12 || myDeck.length === 28 || myDeck.length === 38) {
-                targetRarities = [2, 3]; // 最初と最後は金・虹確定
-            }
+        if (!isReroll && myDeck.length === 38) {
+            targetRarities = [2, 3]; // 最後は金・虹確定
         }
 
         const drawn = [];
         while(drawn.length < 4) {
             const card = drawOne(targetRarities);
-            // 提示内の重複禁止 + すでに提示候補に入っているものは除外
             if(!drawn.some(d => d.id === card.id)) {
                 drawn.push(card);
             }
@@ -219,18 +227,16 @@
     }
 
     function drawOne(rarities) {
-        // デッキ内で既に3枚持っているカードを除外するフィルタを追加
         const currentCounts = {};
         myDeck.forEach(c => currentCounts[c.id] = (currentCounts[c.id] || 0) + 1);
 
         const pool = activeCards.filter(c => {
             const isTypeMatch = (Math.random() < NEUTRAL_CHANCE ? c.type === 0 : c.type === selectedType);
             const isRarityMatch = rarities.includes(c.rarity);
-            const isUnderLimit = (currentCounts[c.id] || 0) < 3; // 3枚未満ならOK
+            const isUnderLimit = (currentCounts[c.id] || 0) < 3; // 同名カード3枚制限
             return isTypeMatch && isRarityMatch && isUnderLimit;
         });
 
-        // 万が一プールが空になった場合のセーフティ
         const finalPool = pool.length > 0 ? pool : activeCards.filter(c => rarities.includes(c.rarity));
         return finalPool[Math.floor(Math.random() * finalPool.length)];
     }
@@ -259,11 +265,8 @@
 
     function updateUI() {
         document.getElementById('deck-count').innerText = myDeck.length;
-        
-        // 進捗表示（2枚1組を1Pickとして表示）
         const pickDisplay = Math.min(Math.floor(myDeck.length / 2), 20);
         document.getElementById('draft-progress').innerText = `${pickDisplay} / 20 Pick`;
-        
         document.getElementById('reroll-count-display').innerText = `残り再抽選: ${remainingRerolls}回`;
         document.getElementById('reroll-button').disabled = (remainingRerolls <= 0 || myDeck.length >= 40);
 
@@ -273,11 +276,7 @@
         
         sortedDeck.forEach(card => {
             const existing = grouped.find(g => g.id === card.id);
-            if (existing) {
-                existing.count++;
-            } else {
-                grouped.push({ ...card, count: 1 });
-            }
+            if (existing) { existing.count++; } else { grouped.push({ ...card, count: 1 }); }
         });
 
         history.innerHTML = grouped.map(g => `
@@ -292,7 +291,10 @@
         if(!c) return;
         document.getElementById('detail-name').innerText = c.name;
         document.getElementById('detail-cost').innerText = `コスト: ${c.cost}`;
+        
+        // innerTextを使うことで、中の改行コードをそのまま改行として処理させます
         document.getElementById('detail-desc').innerText = c.desc;
+        
         openModal('modal-detail');
     }
 
