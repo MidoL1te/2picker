@@ -9,53 +9,44 @@
         .app-container { width: 1100px; min-height: 100vh; padding: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.5); background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); }
         .hidden { display: none !important; }
         
-        .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; text-align: center; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; text-align: center; }
         .btn-main { background: #3b82f6; color: white; box-shadow: 0 4px 0 #1d4ed8; }
         .btn-pick { background: linear-gradient(180deg, #06b6d4 0%, #0891b2 100%); color: white; width: 180px; font-size: 1.1rem; border: 1px solid #22d3ee; margin-top: 15px; }
         .btn-reroll { background: linear-gradient(180deg, #1e293b 0%, #334155 100%); color: #38bdf8; border: 1px solid #38bdf8; padding: 10px 20px; font-size: 0.9rem; }
         .btn-reroll:disabled { opacity: 0.3; cursor: not-allowed; }
 
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
-        .modal-content { background: #1e293b; padding: 30px; width: 550px; border-radius: 15px; border: 1px solid #334155; position: relative; line-height: 1.6; }
+        .modal-content { background: #1e293b; padding: 30px; width: 700px; border-radius: 15px; border: 1px solid #334155; position: relative; }
 
         #detail-desc { 
-            background: rgba(0,0,0,0.4); 
-            padding: 20px; 
-            border-radius: 8px; 
-            margin-top: 15px;
-            font-size: 0.95rem;
-            color: #e2e8f0;
-            line-height: 1.8;
-            white-space: pre-wrap; /* 改行を反映 */
-            word-wrap: break-word;
-            max-height: 350px;
-            overflow-y: auto;
-            border: 1px solid #334155;
-            text-align: left;
+            background: rgba(0,0,0,0.4); padding: 20px; border-radius: 8px; margin-top: 15px;
+            font-size: 0.95rem; color: #e2e8f0; line-height: 1.8; white-space: pre-wrap; 
+            max-height: 300px; overflow-y: auto; border: 1px solid #334155;
         }
+
+        /* BAN設定用 */
+        .acc-header { background: #334155; padding: 12px; cursor: pointer; border-bottom: 1px solid #1e293b; font-weight: bold; display: flex; justify-content: space-between; }
+        .acc-body { padding: 15px; display: none; background: #1e293b; border: 1px solid #334155; }
+        .pack-group { margin-bottom: 15px; border-bottom: 1px dashed #475569; padding-bottom: 10px; }
+        .pack-title { font-size: 0.9rem; color: #38bdf8; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+        .card-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
+        .card-label { font-size: 0.85rem; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        .active { display: block; }
 
         .selection-area { display: flex; align-items: center; justify-content: center; gap: 30px; margin-top: 30px; }
         .option-panel { background: var(--card-panel); border: 2px solid #334155; padding: 20px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; min-width: 360px; }
         .card-group { display: flex; gap: 10px; min-height: 200px; }
-        .card-item { width: 150px; transition: transform 0.2s; cursor: help; position: relative; }
+        .card-item { width: 150px; transition: transform 0.2s; cursor: help; }
         .card-item:hover { transform: scale(1.05); }
-        .card-img { width: 100%; height: auto; border-radius: 6px; border: 2px solid #475569; }
+        .card-img { width: 100%; border-radius: 6px; border: 2px solid #475569; }
 
-        .type-select-grid { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 10px; }
-        .type-option-row { display: flex; align-items: center; background: rgba(51, 65, 85, 0.4); padding: 10px 20px; border-radius: 10px; gap: 20px; border: 1px solid #334155; }
+        .type-option-row { display: flex; align-items: center; background: rgba(51, 65, 85, 0.4); padding: 10px 20px; border-radius: 10px; gap: 20px; border: 1px solid #334155; margin-bottom: 10px;}
         .preview-img { width: 70px; border-radius: 4px; border: 1px solid #38bdf8; }
 
-        .history-container { margin-top: 40px; border-top: 2px solid #334155; padding-top: 20px; }
         .history-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; margin-top: 10px; }
         .history-item { width: 100%; position: relative; }
-        .history-img { width: 100%; height: auto; border-radius: 4px; border: 1px solid #1e293b; }
-        .count-badge { position: absolute; top: -5px; right: -5px; background: rgba(0,0,0,0.9); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid #38bdf8; pointer-events: none; z-index: 10; }
-
-        .center-controls { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 180px; }
-        .reroll-info { font-size: 0.8rem; color: #38bdf8; }
-        .acc-header { background: #334155; padding: 10px; cursor: pointer; border-bottom: 1px solid #1e293b; font-weight: bold; }
-        .acc-body { padding: 10px; display: none; background: #1e293b; }
-        .active { display: block; }
+        .history-img { width: 100%; border-radius: 4px; border: 1px solid #1e293b; }
+        .count-badge { position: absolute; top: -5px; right: -5px; background: rgba(0,0,0,0.9); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 11px; border: 1px solid #38bdf8; }
     </style>
 </head>
 <body>
@@ -68,18 +59,28 @@
             <h3>対象パック選択</h3>
             <div id="pack-checkboxes" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
             <br>
-            <button class="btn btn-main" onclick="openModal('modal-ban')">カードBAN設定</button>
+            <button class="btn btn-main" onclick="openBanSettings()">カード詳細BAN設定</button>
             <button class="btn btn-main" style="float:right;" onclick="enterTypeSelection()">入場する</button>
         </div>
     </div>
 
-    <div id="modal-ban" class="modal"><div class="modal-content"><h2>BAN設定</h2><div id="accordion-container" style="max-height:400px; overflow-y:auto;"></div><br><button class="btn btn-main" style="width:100%" onclick="closeModal('modal-ban')">閉じる</button></div></div>
+    <!-- BAN設定モーダル -->
+    <div id="modal-ban" class="modal">
+        <div class="modal-content">
+            <h2>詳細BAN設定</h2>
+            <p style="font-size:0.8rem; color:#94a3b8;">※最初の画面でチェックを外したパックは、ここでも自動的に解除されています。</p>
+            <div id="accordion-container" style="max-height:450px; overflow-y:auto; border:1px solid #334155;"></div>
+            <br>
+            <button class="btn btn-main" style="width:100%" onclick="closeModal('modal-ban')">設定を完了して閉じる</button>
+        </div>
+    </div>
     
+    <!-- カード詳細モーダル -->
     <div id="modal-detail" class="modal" onclick="closeModal('modal-detail')">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h2 id="detail-name" style="color:#38bdf8; margin: 0 0 5px 0;"></h2>
+            <h2 id="detail-name" style="color:#38bdf8; margin: 0;"></h2>
             <div id="detail-cost" style="font-weight:bold; color: #94a3b8;"></div>
-            <div id="detail-desc"></div> 
+            <div id="detail-desc"></div>
             <br>
             <button class="btn btn-main" style="width:100%" onclick="closeModal('modal-detail')">閉じる</button>
         </div>
@@ -87,7 +88,7 @@
 
     <div id="view-type-select" class="hidden">
         <h2 style="text-align:center;">クラスを選択してください</h2>
-        <div id="type-options" class="type-select-grid"></div>
+        <div id="type-options"></div>
     </div>
 
     <div id="view-draft" class="hidden">
@@ -95,21 +96,20 @@
             <h2 id="current-type-label" style="margin:0; color:#38bdf8;"></h2>
             <div id="draft-progress" style="font-size:1.5rem; font-weight:bold;">1 / 20 Pick</div>
         </div>
-        <div id="draft-complete-msg" class="hidden" style="text-align:center; padding:30px; background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border-radius:10px; margin-top:20px; border: 1px solid #3b82f6;">
+        <div id="draft-complete-msg" class="hidden" style="text-align:center; padding:20px; background: #1e3a8a; border-radius:10px; margin-top:20px;">
             <h2 style="margin:0;">Deck Complete!</h2>
-            <p style="margin: 5px 0 0 0;">40枚すべてのカードが選ばれました。</p>
         </div>
         <div id="selection-controls">
             <div class="selection-area">
                 <div class="option-panel"><div class="card-group" id="display-A"></div><button class="btn btn-pick" onclick="handlePick('A')">左を選択</button></div>
-                <div class="center-controls">
+                <div class="center-controls" style="text-align:center;">
                     <button id="reroll-button" class="btn btn-reroll" onclick="handleReroll()">再抽選</button>
-                    <div id="reroll-count-display" class="reroll-info">残り: 0回</div>
+                    <div id="reroll-count-display" style="font-size:0.8rem; margin-top:5px;">残り: 0回</div>
                 </div>
                 <div class="option-panel"><div class="card-group" id="display-B"></div><button class="btn btn-pick" onclick="handlePick('B')">右を選択</button></div>
             </div>
         </div>
-        <div class="history-container">
+        <div style="margin-top:40px;">
             <h4 style="margin:0; color:#94a3b8;">Pick履歴 (<span id="deck-count">0</span> / 40)</h4>
             <div id="history-display" class="history-grid"></div>
         </div>
@@ -118,138 +118,155 @@
 
 <script>
     const CLASS_NAMES = { 0: "ニュートラル", 1: "エルフ", 2: "ロイヤル", 3: "ウィッチ", 4: "ドラゴン", 5: "ナイトメア", 6: "ビショップ", 7: "ネメシス" };
-    const NEUTRAL_CHANCE = 0.20;
-    const REROLL_LIMITS = { 1: 2, 2: 2, 3: 2, 4: 2, 5: 2, 6: 2, 7: 2 };
-
     let masterCards = []; let activeCards = []; let myDeck = [];
-    let selectedType = 0;
-    let currentOptions = { A: [], B: [] };
-    let remainingRerolls = 0;
-    let typePreviewCards = {};
+    let selectedType = 0; let currentOptions = { A: [], B: [] };
+    let remainingRerolls = 0; let typePreviewCards = {};
+    let maxPack = 0;
 
-    // 【最重要】クォーテーション内の改行を保護しながらCSVを読み込む関数
+    // CSV読み込み
     function parseComplexCSV(text) {
-        const result = [];
-        let row = [];
-        let field = "";
-        let inQuotes = false;
-
+        const result = []; let row = []; let field = ""; let inQuotes = false;
         for (let i = 0; i < text.length; i++) {
-            const char = text[i];
-            const nextChar = text[i + 1];
-
+            const char = text[i]; const nextChar = text[i + 1];
             if (inQuotes) {
-                if (char === '"' && nextChar === '"') { // エスケープされたダブルクォート
-                    field += '"';
-                    i++;
-                } else if (char === '"') { // クォート終了
-                    inQuotes = false;
-                } else {
-                    field += char; // クォート内の文字（改行含む）をそのまま保持
-                }
+                if (char === '"' && nextChar === '"') { field += '"'; i++; }
+                else if (char === '"') inQuotes = false;
+                else field += char;
             } else {
-                if (char === '"') {
-                    inQuotes = true;
-                } else if (char === ',') {
-                    row.push(field);
-                    field = "";
-                } else if (char === '\r' || char === '\n') {
-                    if (field !== "" || row.length > 0) {
-                        row.push(field);
-                        result.push(row);
-                        row = [];
-                        field = "";
-                    }
-                    if (char === '\r' && nextChar === '\n') i++; // CRLF対応
-                } else {
-                    field += char;
-                }
+                if (char === '"') inQuotes = true;
+                else if (char === ',') { row.push(field); field = ""; }
+                else if (char === '\r' || char === '\n') {
+                    if (field !== "" || row.length > 0) { row.push(field); result.push(row); row = []; field = ""; }
+                    if (char === '\r' && nextChar === '\n') i++;
+                } else field += char;
             }
         }
-        if (row.length > 0) {
-            row.push(field);
-            result.push(row);
-        }
+        if (row.length > 0) { row.push(field); result.push(row); }
         return result;
     }
 
     window.addEventListener('DOMContentLoaded', () => {
         fetch('data/cards.csv').then(res => res.text()).then(text => {
             const data = parseComplexCSV(text);
-            // ヘッダーを除いてループ
             for (let i = 1; i < data.length; i++) {
-                const d = data[i];
-                if (d.length < 8) continue;
-
+                const d = data[i]; if (d.length < 8) continue;
+                const p = parseInt(d[2]);
+                if (p > maxPack) maxPack = p; // 最大パック数を更新
                 masterCards.push({ 
-                    id: d[0], name: d[1], pack: parseInt(d[2]), type: parseInt(d[3]), 
+                    id: d[0], name: d[1], pack: p, type: parseInt(d[3]), 
                     rarity: parseInt(d[4]), image_id: d[5], cost: parseInt(d[6]), 
-                    desc: d[7], // ここに本物の改行が入った状態
-                    isBanned: false 
+                    desc: d[7], isBanned: false 
                 });
             }
             document.getElementById('loading-status').innerText = "Load OK";
             renderPackChecks();
-            renderBanSettings();
         });
     });
 
+    // パックチェックボックス生成
     function renderPackChecks() {
         const area = document.getElementById('pack-checkboxes');
-        for(let i=0; i<=7; i++) area.innerHTML += `<label style="background:#334155; padding:8px; border-radius:5px; cursor:pointer; margin-right:5px;"><input type="checkbox" class="pack-chk" value="${i}" checked> ${i===0?'Basic':i+'弾'}</label>`;
+        area.innerHTML = '';
+        for(let i=0; i<=maxPack; i++) {
+            area.innerHTML += `<label style="background:#334155; padding:8px; border-radius:5px; cursor:pointer;">
+                <input type="checkbox" class="pack-main-chk" data-pack="${i}" checked onchange="syncBanWithPack(${i}, this.checked)"> 
+                ${i===0?'Basic':i+'弾'}</label>`;
+        }
     }
 
-    function renderBanSettings() {
+    // パックのチェック変更時にカードのBAN状態を同期
+    function syncBanWithPack(packNum, isChecked) {
+        masterCards.forEach(c => {
+            if (c.pack === packNum) c.isBanned = !isChecked;
+        });
+    }
+
+    // BAN設定画面を開く
+    function openBanSettings() {
+        renderBanAccordion();
+        openModal('modal-ban');
+    }
+
+    function renderBanAccordion() {
         const container = document.getElementById('accordion-container');
         container.innerHTML = '';
-        [0,1,2,3,4,5,6,7].forEach(i => {
+        [0,1,2,3,4,5,6,7].forEach(typeIdx => {
+            const classCards = masterCards.filter(c => c.type === typeIdx);
+            if (classCards.length === 0) return;
+
             const div = document.createElement('div');
-            div.innerHTML = `<div class="acc-header" onclick="this.nextElementSibling.classList.toggle('active')">${CLASS_NAMES[i]} ▼</div>
-                <div class="acc-body">${masterCards.filter(c=>c.type===i).map(c=>`<label style="display:block;"><input type="checkbox" onchange="masterCards.find(m=>m.id==='${c.id}').isBanned=!this.checked" checked> ${c.name}</label>`).join('')}</div>`;
+            let innerHTML = `<div class="acc-header" onclick="this.nextElementSibling.classList.toggle('active')">
+                <span>${CLASS_NAMES[typeIdx]}</span><span>▼</span></div><div class="acc-body">`;
+            
+            for (let p = 0; p <= maxPack; p++) {
+                const packCards = classCards.filter(c => c.pack === p);
+                if (packCards.length === 0) continue;
+                
+                const allChecked = packCards.every(c => !c.isBanned);
+                innerHTML += `<div class="pack-group">
+                    <div class="pack-title">
+                        <strong>${p===0?'Basic':p+'弾'}</strong>
+                        <button class="btn" style="padding:2px 8px; font-size:0.7rem; background:#475569;" 
+                            onclick="togglePackInBan(${typeIdx}, ${p}, this)">一括切替</button>
+                    </div>
+                    <div class="card-list">
+                        ${packCards.map(c => `
+                            <label class="card-label">
+                                <input type="checkbox" class="card-ban-chk" data-id="${c.id}" ${!c.isBanned?'checked':''} 
+                                    onchange="masterCards.find(m=>m.id==='${c.id}').isBanned = !this.checked">
+                                ${c.name}
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>`;
+            }
+            div.innerHTML = innerHTML + `</div>`;
             container.appendChild(div);
         });
     }
 
+    // BAN設定内の一括切替ボタン
+    function togglePackInBan(typeIdx, packNum, btn) {
+        const packCards = masterCards.filter(c => c.type === typeIdx && c.pack === packNum);
+        const currentState = packCards[0].isBanned;
+        packCards.forEach(c => c.isBanned = !currentState);
+        renderBanAccordion(); // 再描画
+    }
+
     function enterTypeSelection() {
-        const selectedPacks = Array.from(document.querySelectorAll('.pack-chk:checked')).map(el => parseInt(el.value));
-        activeCards = masterCards.filter(c => !c.isBanned && selectedPacks.includes(c.pack));
+        const activePacks = Array.from(document.querySelectorAll('.pack-main-chk:checked')).map(el => parseInt(el.dataset.pack));
+        activeCards = masterCards.filter(c => !c.isBanned && activePacks.includes(c.pack));
+        
+        if (activeCards.length < 10) { alert("有効なカードが少なすぎます。パック選択やBAN設定を見直してください。"); return; }
+        
         document.getElementById('view-setup').classList.add('hidden');
         document.getElementById('view-type-select').classList.remove('hidden');
-        
         const container = document.getElementById('type-options');
         container.innerHTML = '';
         for(let i=1; i<=7; i++) {
             const pool = activeCards.filter(c => c.type === i && c.rarity >= 2);
+            if (pool.length === 0) continue;
             typePreviewCards[i] = pool.sort(() => 0.5 - Math.random()).slice(0, 2);
-            const row = document.createElement('div');
-            row.className = 'type-option-row';
-            row.innerHTML = `<button class="btn btn-main" style="width:180px;" onclick="startDraft(${i})">${CLASS_NAMES[i]}</button>
-                <div class="preview-imgs">${typePreviewCards[i].map(p => `<img src="image/${p.image_id}.png" class="preview-img" onerror="this.src='https://via.placeholder.com/70x95?text=Card'">`).join('')}</div>`;
-            container.appendChild(row);
+            container.innerHTML += `<div class="type-option-row">
+                <button class="btn btn-main" style="width:180px;" onclick="startDraft(${i})">${CLASS_NAMES[i]}</button>
+                <div>${typePreviewCards[i].map(p => `<img src="image/${p.image_id}.png" class="preview-img">`).join('')}</div>
+            </div>`;
         }
     }
 
     function startDraft(classId) {
-        selectedType = classId;
-        remainingRerolls = REROLL_LIMITS[classId] || 0;
+        selectedType = classId; remainingRerolls = 2;
         myDeck = [...typePreviewCards[classId]];
         document.getElementById('view-type-select').classList.add('hidden');
         document.getElementById('view-draft').classList.remove('hidden');
         document.getElementById('current-type-label').innerText = `クラス: ${CLASS_NAMES[classId]}`;
-        updateUI();
-        nextPick();
+        updateUI(); nextPick();
     }
 
-    function handleReroll() {
-        if(remainingRerolls > 0) {
-            remainingRerolls--;
-            nextPick(true);
-        }
-    }
+    function handleReroll() { if(remainingRerolls > 0) { remainingRerolls--; nextPick(true); } }
 
     function nextPick(isReroll = false) {
         if(myDeck.length >= 40 && !isReroll) return;
-        let targetRarities = [0, 1, 2, 3];
         if (!isReroll) {
             if (myDeck.length === 2 || myDeck.length === 6 || myDeck.length === 10 || myDeck.length === 14 || myDeck.length === 18 || myDeck.length === 22 || myDeck.length === 26 || myDeck.length === 30 || myDeck.length === 34) {
             targetRarities = [0];
@@ -261,75 +278,57 @@
             targetRarities = [2,3];
             }
         }
-
         const drawn = [];
         while(drawn.length < 4) {
             const card = drawOne(targetRarities);
             if(!drawn.some(d => d.id === card.id)) drawn.push(card);
         }
-        currentOptions.A = [drawn[0], drawn[1]];
-        currentOptions.B = [drawn[2], drawn[3]];
+        currentOptions.A = [drawn[0], drawn[1]]; currentOptions.B = [drawn[2], drawn[3]];
         renderChoices();
     }
 
     function drawOne(rarities) {
-        const currentCounts = {};
-        myDeck.forEach(c => currentCounts[c.id] = (currentCounts[c.id] || 0) + 1);
+        const counts = {}; myDeck.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
         const pool = activeCards.filter(c => {
-            const isTypeMatch = (Math.random() < NEUTRAL_CHANCE ? c.type === 0 : c.type === selectedType);
-            const isRarityMatch = rarities.includes(c.rarity);
-            const isUnderLimit = (currentCounts[c.id] || 0) < 3;
-            return isTypeMatch && isRarityMatch && isUnderLimit;
+            const isType = (Math.random() < 0.2 ? c.type === 0 : c.type === selectedType);
+            return isType && rarities.includes(c.rarity) && (counts[c.id] || 0) < 3;
         });
-        const finalPool = pool.length > 0 ? pool : activeCards.filter(c => rarities.includes(c.rarity));
-        return finalPool[Math.floor(Math.random() * finalPool.length)];
+        return pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : activeCards[0];
     }
 
     function renderChoices() {
         ['A', 'B'].forEach(L => {
-            const container = document.getElementById(`display-${L}`);
-            container.innerHTML = currentOptions[L].map(c => `
-                <div class="card-item" onclick="showDetail('${c.id}')">
-                    <img src="image/${c.image_id}.png" class="card-img" onerror="this.src='https://via.placeholder.com/150x200?text=${encodeURIComponent(c.name)}'">
-                </div>`).join('');
+            document.getElementById(`display-${L}`).innerHTML = currentOptions[L].map(c => `
+                <div class="card-item" onclick="showDetail('${c.id}')"><img src="image/${c.image_id}.png" class="card-img"></div>`).join('');
         });
     }
 
     function handlePick(L) {
-        myDeck.push(...currentOptions[L]);
-        updateUI();
+        myDeck.push(...currentOptions[L]); updateUI();
         if(myDeck.length >= 40) {
             document.getElementById('selection-controls').classList.add('hidden');
             document.getElementById('draft-complete-msg').classList.remove('hidden');
-        } else {
-            nextPick();
-        }
+        } else nextPick();
     }
 
     function updateUI() {
         document.getElementById('deck-count').innerText = myDeck.length;
-        const pickDisplay = Math.min(Math.floor(myDeck.length / 2), 20);
-        document.getElementById('draft-progress').innerText = `${pickDisplay} / 20 Pick`;
+        document.getElementById('draft-progress').innerText = `${Math.min(Math.floor(myDeck.length/2), 20)} / 20 Pick`;
         document.getElementById('reroll-count-display').innerText = `残り再抽選: ${remainingRerolls}回`;
         document.getElementById('reroll-button').disabled = (remainingRerolls <= 0 || myDeck.length >= 40);
-
-        const history = document.getElementById('history-display');
         const grouped = [];
-        const sortedDeck = [...myDeck].sort((a, b) => (a.cost - b.cost) || (a.id.localeCompare(b.id)));
-        sortedDeck.forEach(card => {
-            const existing = grouped.find(g => g.id === card.id);
-            if (existing) { existing.count++; } else { grouped.push({ ...card, count: 1 }); }
+        [...myDeck].sort((a,b)=>a.cost-b.cost || a.id.localeCompare(b.id)).forEach(c => {
+            const ex = grouped.find(g => g.id === c.id);
+            if(ex) ex.count++; else grouped.push({...c, count: 1});
         });
-        history.innerHTML = grouped.map(g => `
+        document.getElementById('history-display').innerHTML = grouped.map(g => `
             <div class="history-item" onclick="showDetail('${g.id}')">
-                <img src="image/${g.image_id}.png" class="history-img" title="${g.name}">
-                <div class="count-badge">×${g.count}</div>
+                <img src="image/${g.image_id}.png" class="history-img"><div class="count-badge">×${g.count}</div>
             </div>`).join('');
     }
 
     function showDetail(id) {
         const c = masterCards.find(m => m.id === id);
-        if(!c) return;
         document.getElementById('detail-name').innerText = c.name;
         document.getElementById('detail-cost').innerText = `コスト: ${c.cost}`;
         document.getElementById('detail-desc').innerText = c.desc;
