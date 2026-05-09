@@ -17,20 +17,22 @@
 
         /* モーダル関連 */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
-        .modal-content { background: #1e293b; padding: 40px; width: 600px; border-radius: 15px; border: 1px solid #334155; position: relative; line-height: 1.6; }
+        .modal-content { background: #1e293b; padding: 30px; width: 550px; border-radius: 15px; border: 1px solid #334155; position: relative; line-height: 1.6; }
 
-        /* 【重要】カード説明文の改行設定 */
+        /* カード説明文エリア */
         #detail-desc { 
-            white-space: pre-wrap;      /* 改行コードを維持して表示 */
-            word-wrap: break-word;     /* 長い単語を自動で折り返す */
-            background: rgba(0,0,0,0.3); 
-            padding: 15px; 
+            background: rgba(0,0,0,0.4); 
+            padding: 20px; 
             border-radius: 8px; 
-            margin-top: 10px;
+            margin-top: 15px;
             font-size: 0.95rem;
-            color: #cbd5e1;
-            max-height: 300px;         /* 長すぎる場合にスクロールさせる */
+            color: #e2e8f0;
+            line-height: 1.8;      /* 行間を広げて読みやすく */
+            white-space: normal;   /* innerHTML + <br> を使うのでnormalでOK */
+            word-wrap: break-word;
+            max-height: 350px;
             overflow-y: auto;
+            border: 1px solid #334155;
         }
 
         .selection-area { display: flex; align-items: center; justify-content: center; gap: 30px; margin-top: 30px; }
@@ -49,7 +51,7 @@
         .history-item { width: 100%; position: relative; }
         .history-img { width: 100%; height: auto; border-radius: 4px; border: 1px solid #1e293b; }
         
-        .count-badge { position: absolute; top: -5px; right: -5px; background: rgba(0,0,0,0.85); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid #38bdf8; pointer-events: none; z-index: 10; }
+        .count-badge { position: absolute; top: -5px; right: -5px; background: rgba(0,0,0,0.9); color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid #38bdf8; pointer-events: none; z-index: 10; }
 
         .center-controls { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 180px; }
         .reroll-info { font-size: 0.8rem; color: #38bdf8; }
@@ -61,6 +63,7 @@
 <body>
 
 <div class="app-container">
+    <!-- セットアップ -->
     <div id="view-setup">
         <h1 style="text-align:center; color:#38bdf8;">2Pick Simulator</h1>
         <p id="loading-status" style="text-align:center;">Loading CSV...</p>
@@ -73,23 +76,27 @@
         </div>
     </div>
 
+    <!-- BAN設定モーダル -->
     <div id="modal-ban" class="modal"><div class="modal-content"><h2>BAN設定</h2><div id="accordion-container" style="max-height:400px; overflow-y:auto;"></div><br><button class="btn btn-main" style="width:100%" onclick="closeModal('modal-ban')">閉じる</button></div></div>
     
+    <!-- カード詳細モーダル -->
     <div id="modal-detail" class="modal" onclick="closeModal('modal-detail')">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h2 id="detail-name" style="color:#38bdf8; margin-top:0;"></h2>
-            <div id="detail-cost" style="font-weight:bold; margin-bottom:10px;"></div>
-            <div id="detail-desc"></div> <!-- CSSで改行制御 -->
+            <h2 id="detail-name" style="color:#38bdf8; margin: 0 0 5px 0;"></h2>
+            <div id="detail-cost" style="font-weight:bold; color: #94a3b8;"></div>
+            <div id="detail-desc"></div> <!-- JSで <br> 置換して挿入 -->
             <br>
             <button class="btn btn-main" style="width:100%" onclick="closeModal('modal-detail')">閉じる</button>
         </div>
     </div>
 
+    <!-- クラス選択 -->
     <div id="view-type-select" class="hidden">
         <h2 style="text-align:center;">クラスを選択してください</h2>
         <div id="type-options" class="type-select-grid"></div>
     </div>
 
+    <!-- ドラフトメイン -->
     <div id="view-draft" class="hidden">
         <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #334155; padding-bottom: 10px;">
             <h2 id="current-type-label" style="margin:0; color:#38bdf8;"></h2>
@@ -135,15 +142,15 @@
             const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
             for (let i = 1; i < lines.length; i++) {
                 const d = lines[i].split(',').map(item => item.trim());
-                if (d.length < 6) continue;
-                // CSV内の文字列としての \n を 本物の改行コードに変換
-                const rawDesc = d[7] || "";
-                const cleanDesc = rawDesc.replace(/\\n/g, '\n').replace(/"/g, '');
+                if (d.length < 8) continue;
+
+                // 文字列内の \\n を 実際の改行 \n に一度変換
+                let rawDesc = d[7].replace(/\\n/g, '\n').replace(/"/g, '');
 
                 masterCards.push({ 
                     id: d[0], name: d[1], pack: parseInt(d[2]), type: parseInt(d[3]), 
                     rarity: parseInt(d[4]), image_id: d[5], cost: parseInt(d[6]), 
-                    desc: cleanDesc, isBanned: false 
+                    desc: rawDesc, isBanned: false 
                 });
             }
             document.getElementById('loading-status').innerText = "Load OK";
@@ -241,7 +248,7 @@
         const pool = activeCards.filter(c => {
             const isTypeMatch = (Math.random() < NEUTRAL_CHANCE ? c.type === 0 : c.type === selectedType);
             const isRarityMatch = rarities.includes(c.rarity);
-            const isUnderLimit = (currentCounts[c.id] || 0) < 3; // 同名カード3枚制限
+            const isUnderLimit = (currentCounts[c.id] || 0) < 3;
             return isTypeMatch && isRarityMatch && isUnderLimit;
         });
 
@@ -297,11 +304,14 @@
     function showDetail(id) {
         const c = masterCards.find(m => m.id === id);
         if(!c) return;
+
         document.getElementById('detail-name').innerText = c.name;
         document.getElementById('detail-cost').innerText = `コスト: ${c.cost}`;
         
-        // innerTextを使うことで、中の改行コードをそのまま改行として処理させます
-        document.getElementById('detail-desc').innerText = c.desc;
+        // ★修正の要: \n を HTMLの <br> に変換して innerHTML で流し込む
+        // これによりCSSの設定に依存せず確実に改行されます。
+        const formattedDesc = c.desc.split('\n').join('<br>');
+        document.getElementById('detail-desc').innerHTML = formattedDesc;
         
         openModal('modal-detail');
     }
