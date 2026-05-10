@@ -252,7 +252,7 @@
         if(myDeck.length >= 40 && !isReroll) return;
         let allowedRarities = [0, 1, 2, 3];
         if (!isReroll) {
-            const pickCount = (myDeck.length - 2) / 2;
+            const pickCount = myDeck.length / 2;
             if (pickCount === 1 || pickCount === 3 || pickCount === 5 || pickCount === 7 || pickCount === 9 || pickCount === 11 || pickCount === 13 || pickCount === 15 || pickCount === 17) allowedRarities = [0];
             if (pickCount === 2 || pickCount === 4 || pickCount === 8 || pickCount === 10 || pickCount === 12 || pickCount === 16 || pickCount === 18) allowedRarities = [1];
             if (pickCount === 6 || pickCount === 14|| pickCount === 19) allowedRarities = [2, 3];
